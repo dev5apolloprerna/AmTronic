@@ -26,7 +26,7 @@
                         <tr>
                             <th>Designation</th>
                             <th>Employees</th>
-                            <th>Can Log In</th>
+                            <th>Login Access</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
@@ -36,7 +36,7 @@
                             <tr>
                                 <td>{{ $designation->name }}</td>
                                 <td>{{ $designation->employees_count }}</td>
-                                <td>{{ $designation->can_login ? 'Yes' : 'No' }}</td>
+                                <td>{{ ! $designation->can_login ? 'None' : ($designation->api_only ? 'API only' : 'Web & API') }}</td>
                                 <td><span class="pill pill-{{ $designation->status }}">{{ $designation->status }}</span></td>
                                 <td>
                                     <a href="{{ route('designations.edit', $designation) }}" class="btn btn-secondary btn-sm">Edit</a>

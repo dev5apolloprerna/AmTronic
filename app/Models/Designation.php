@@ -7,12 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 
 class Designation extends Model
 {
-    protected $fillable = ['name', 'status', 'can_login'];
+    protected $fillable = ['name', 'status', 'can_login', 'api_only'];
 
     protected function casts(): array
     {
         return [
             'can_login' => 'boolean',
+            'api_only' => 'boolean',
         ];
     }
 

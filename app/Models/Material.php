@@ -17,4 +17,9 @@ class Material extends Model
         'hsn_code',
         'status',
     ];
+
+    public function quotationItems()
+    {
+        return $this->hasMany(QuotationItem::class);
+    }
 }

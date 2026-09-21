@@ -52,8 +52,12 @@ class MaterialController extends Controller
 
     public function destroy(Material $material)
     {
-        // Nothing references materials yet. When Purchase Orders are added,
-        // block deleting a material that appears on one (as ProductController does).
+        // Quotation lines can use a material, so it cannot be deleted while one does.
+        // (When Purchase Orders are added, block that case here too.)
+        if ($material->quotationItems()->exists()) {
+            return back()->with('error', 'Cannot delete a material used in quotations. Mark it inactive instead.');
+        }
+
         $material->delete();
 
         return redirect()->route('materials.index')->with('success', 'Material deleted successfully.');

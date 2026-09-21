@@ -229,16 +229,15 @@
     {{-- ITEMS --}}
     <table class="items-table">
         <colgroup>
-            <col style="width:6%"><col style="width:34%"><col style="width:16%"><col style="width:14%"><col style="width:14%"><col style="width:16%">
+            <col style="width:7%"><col style="width:53%"><col style="width:14%"><col style="width:14%"><col style="width:12%">
         </colgroup>
         <thead>
             <tr>
                 <th>#</th>
                 <th style="text-align:left;padding-left:2.5mm;">Product / Description</th>
                 <th>HSN</th>
-                <th>Size (Mtr)</th>
-                <th>Rolls</th>
-                <th>Total Mtr</th>
+                <th>Qty</th>
+                <th>Unit</th>
             </tr>
         </thead>
         <tbody>
@@ -246,13 +245,12 @@
                 <tr>
                     <td>{{ $i + 1 }}</td>
                     <td class="desc-cell">
-                        <strong>{{ $item->product->name }}</strong>
-                        @if($item->product->description)<small>{{ $item->product->description }}</small>@endif
+                        <strong>{{ $item->item_name }}@if($item->legacy_size_label) - {{ $item->legacy_size_label }}@endif</strong>
+                        @if($item->line_description)<small>{{ $item->line_description }}</small>@endif
                     </td>
-                    <td>{{ $item->product->hsn_code }}</td>
-                    <td>{{ number_format($item->size_mtr, 2) }}</td>
-                    <td>{{ $item->no_of_rolls }}</td>
-                    <td>{{ number_format($item->total_mtr, 2) }}</td>
+                    <td>{{ $item->item_hsn }}</td>
+                    <td>{{ $item->qty_label }}</td>
+                    <td>{{ $item->item_unit }}</td>
                 </tr>
             @endforeach
             

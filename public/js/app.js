@@ -141,38 +141,41 @@ function initQuotationBuilder() {
   }
 
   function bindRow(row) {
-    var productSelect = row.querySelector('.js-product');
-    var sizeInput = row.querySelector('.js-size');
-    var rollsInput = row.querySelector('.js-rolls');
-    var priceInput = row.querySelector('.js-price');
+    var itemSelect = row.querySelector('.js-item');
+    var descriptionInput = row.querySelector('.js-description');
+    var qtyInput = row.querySelector('.js-qty');
+    var rateInput = row.querySelector('.js-rate');
     var removeBtn = row.querySelector('.js-remove');
     var amountEl = row.querySelector('.js-amount');
 
+    // A description that is already there (edit mode) or that the user types is theirs:
+    // picking a different item must not overwrite it.
+    if (descriptionInput && descriptionInput.value.trim() !== '') {
+      descriptionInput.dataset.userEdited = '1';
+    }
+
     function recalcRow() {
-    var size = parseFloat(sizeInput.value) || 0;
-    var rolls = parseInt(rollsInput.value, 10) || 0;
-    var price = parseFloat(priceInput.value) || 0;
-    var totalMtr = size * rolls;
-    var amount = rolls * price;   // was: totalMtr * price
-    amountEl.textContent = formatMoney(amount);
-    recalcTotals();
-  }
+      var qty = parseFloat(qtyInput.value) || 0;
+      var rate = parseFloat(rateInput.value) || 0;
+      amountEl.textContent = formatMoney(Math.round(qty * rate * 100) / 100);
+      recalcTotals();
+    }
 
-    function fetchLastPrice() {
+    function fetchLastRate() {
       var customerId = customerSelect ? customerSelect.value : null;
-      var productId = productSelect.value;
-      if (!customerId || !productId) return;
+      var item = itemSelect.value;
+      if (!customerId || !item) return;
 
-      var url = window.LAST_PRICE_URL + '?customer_id=' + encodeURIComponent(customerId) + '&product_id=' + encodeURIComponent(productId);
+      var url = window.LAST_PRICE_URL + '?customer_id=' + encodeURIComponent(customerId) + '&item=' + encodeURIComponent(item);
 
       fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
         .then(function (res) { return res.json(); })
         .then(function (data) {
-          if (data.found && data.price_per_mtr !== null && !priceInput.dataset.userEdited) {
-            priceInput.value = data.price_per_mtr;
+          if (data.found && data.rate !== null && !rateInput.dataset.userEdited) {
+            rateInput.value = data.rate;
             var hint = row.querySelector('.js-last-price-hint');
             if (hint) {
-              hint.textContent = 'Last rate: ' + formatMoney(data.price_per_mtr) + '/Mtr';
+              hint.textContent = 'Last rate: \u20b9' + formatMoney(data.rate);
               hint.style.display = 'block';
             }
             recalcRow();
@@ -181,28 +184,41 @@ function initQuotationBuilder() {
         .catch(function () { /* silently ignore */ });
     }
 
-    priceInput.addEventListener('input', function () {
-      priceInput.dataset.userEdited = '1';
+    rateInput.addEventListener('input', function () {
+      rateInput.dataset.userEdited = '1';
       recalcRow();
     });
-    sizeInput.addEventListener('input', recalcRow);
-    rollsInput.addEventListener('input', recalcRow);
-    productSelect.addEventListener('change', function () {
-      priceInput.dataset.userEdited = '';
-      fetchLastPrice();
+    qtyInput.addEventListener('input', recalcRow);
+    if (descriptionInput) {
+      descriptionInput.addEventListener('input', function () {
+        descriptionInput.dataset.userEdited = '1';
+      });
+    }
+    itemSelect.addEventListener('change', function () {
+      rateInput.dataset.userEdited = '';
+      var hint = row.querySelector('.js-last-price-hint');
+      if (hint) hint.style.display = 'none';
+
+      // Pre-fill the description from the product / material, unless the user wrote their own.
+      if (descriptionInput && !descriptionInput.dataset.userEdited) {
+        var option = itemSelect.options[itemSelect.selectedIndex];
+        descriptionInput.value = option ? (option.getAttribute('data-description') || '') : '';
+      }
+
+      fetchLastRate();
       recalcRow();
     });
 
     if (customerSelect) {
       customerSelect.addEventListener('change', function () {
-        priceInput.dataset.userEdited = '';
-        fetchLastPrice();
+        rateInput.dataset.userEdited = '';
+        fetchLastRate();
       });
     }
 
     removeBtn.addEventListener('click', function () {
       if (container.querySelectorAll('.item-row').length <= 1) {
-        alert('A quotation must have at least one product line.');
+        alert('A quotation must have at least one item line.');
         return;
       }
       row.remove();
@@ -225,10 +241,10 @@ function initQuotationBuilder() {
   function recalcTotals() {
     var subTotal = 0;
     container.querySelectorAll('.item-row').forEach(function (row) {
-      var rolls = parseInt(row.querySelector('.js-rolls').value, 10) || 0;
-      var price = parseFloat(row.querySelector('.js-price').value) || 0;
-      subTotal += rolls * price;   // was: size * rolls * price
-  });
+      var qty = parseFloat(row.querySelector('.js-qty').value) || 0;
+      var rate = parseFloat(row.querySelector('.js-rate').value) || 0;
+      subTotal += Math.round(qty * rate * 100) / 100;
+    });
 
     var gstApplicable = isGstApplicable();
     var discount = discountInput ? (parseFloat(discountInput.value) || 0) : 0;

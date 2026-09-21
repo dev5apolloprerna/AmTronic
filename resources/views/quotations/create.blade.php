@@ -30,8 +30,8 @@
                 @include('quotations._shipping', ['quotation' => $quotation ?? null])
                 <div class="card" style="box-shadow:none; border:1px solid var(--color-border); margin-top:10px;">
                     <div class="card-header">
-                        <h3>Products</h3>
-                        <button type="button" id="addItemBtn" class="btn btn-secondary btn-sm">+ Add Product Line</button>
+                        <h3>Items</h3>
+                        <button type="button" id="addItemBtn" class="btn btn-secondary btn-sm">+ Add Item</button>
                     </div>
                     <div class="card-body">
                         <div id="itemsContainer" data-next-index="0"></div>
@@ -75,13 +75,13 @@
 
                 <div style="margin-top:20px;">
                     <button type="submit" class="btn btn-primary">Create Quotation</button>
-                    <span class="form-hint">You can edit this quotation and add/remove products until it's approved.</span>
+                    <span class="form-hint">You can edit this quotation and add/remove items until it's sent.</span>
                 </div>
             </form>
         </div>
     </div>
 
     <template id="itemRowTemplate">
-        @include('quotations._item_row', ['index' => '__INDEX__', 'products' => $products, 'item' => null])
+        @include('quotations._item_row', ['index' => '__INDEX__', 'products' => $products, 'materials' => $materials, 'item' => null])
     </template>
 @endsection

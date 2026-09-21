@@ -11,7 +11,7 @@ class InvoiceController extends Controller
     public function show(Invoice $invoice)
     {
         $this->authorizeAccess($invoice);
-        $invoice->load(['customer', 'quotation.items.product', 'quotation.user', 'payments.enteredBy', 'deliveryChallan']);
+        $invoice->load(['customer', 'quotation.items.product', 'quotation.items.material', 'quotation.user', 'payments.enteredBy', 'deliveryChallan']);
 
         $totalPaid = $invoice->totalPaid();
         $balanceDue = $invoice->balanceDue();
@@ -22,7 +22,7 @@ class InvoiceController extends Controller
     public function download(Invoice $invoice)
     {
         $this->authorizeAccess($invoice);
-        $invoice->load(['customer', 'quotation.items.product', 'quotation.user']);
+        $invoice->load(['customer', 'quotation.items.product', 'quotation.items.material', 'quotation.user']);
 
         $pdf = Pdf::loadView('invoices.pdf', compact('invoice'))->setPaper('a4');
 

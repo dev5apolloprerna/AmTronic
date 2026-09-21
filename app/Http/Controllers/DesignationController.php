@@ -65,7 +65,7 @@ class DesignationController extends Controller
 
         // Unchecked checkboxes are not submitted, so read it as a boolean.
         $data['can_login'] = $request->boolean('can_login');
-
+        $data['api_only'] = $data['can_login'] && $request->boolean('api_only');
         return $data;
     }
 }

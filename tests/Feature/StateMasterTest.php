@@ -105,16 +105,13 @@ class StateMasterTest extends TestCase
             'shipping_state' => $state,
             'shipping_city' => 'Surat',
             'shipping_pincode' => '395001',
-            'items' => [['product_id' => $product->id, 'size_mtr' => 10, 'no_of_rolls' => 1, 'price_per_mtr' => 5]],
+            'items' => [['item' => 'product:' . $product->id, 'qty' => 1, 'rate' => 5]],
         ];
 
         $this->actingAs($admin)->post(route('quotations.store'), $payload('Atlantis'))
             ->assertSessionHasErrors('shipping_state');
 
-        // A state from the master passes validation. (We only assert on validation
-        // here: on a database built purely from the repo's migrations the insert that
-        // follows fails, because quotations.admin_charges / material_handling_charges
-        // have no migration - unrelated to states.)
+        // A state from the master passes validation (and the quotation is saved).
         $this->actingAs($admin)->post(route('quotations.store'), $payload('Test Territory'))
             ->assertSessionHasNoErrors();
     }
