@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Sales Report</title>
     <style>
-        :root { --green:#4f8128; --green-dark:#2f6d16; --green-deep:#285e10; --ink:#141b21; --paper:#fff; }
+        :root { --green:#4f8128; --green-dark:#2f6d16; --green-deep:#c02026; --ink:#141b21; --paper:#fff; }
         * { box-sizing: border-box; }
         html, body { margin:0; padding:0; background:#fff; color:#111; font-family: DejaVu Sans, Arial, Helvetica, sans-serif; font-size:10.3px; }
         table { width:100%; border-collapse:collapse; border-spacing:0; }
@@ -36,7 +36,7 @@
         /* ================= INFO BOXES (same pattern as Buyer/Ship To/Account Details) ================= */
         .party-box { width:100%; border:1px solid #8ea37d; border-radius:2.6mm; border-collapse:separate !important; border-spacing:0 !important; overflow:hidden !important; background:#fff; margin-bottom:2.5mm; }
         .party-box > tbody > tr > td { padding:0 !important; border:0 !important; vertical-align:top; }
-        .party-tag-bar { height:6.8mm; line-height:6.8mm; padding:0 4.5mm; color:#fff; background:#285e10; font-size:12px; font-weight:800; letter-spacing:.3px; white-space:nowrap; overflow:hidden; }
+        .party-tag-bar { height:6.8mm; line-height:6.8mm; padding:0 4.5mm; color:#fff; background:#c02026; font-size:12px; font-weight:800; letter-spacing:.3px; white-space:nowrap; overflow:hidden; }
         .party-fields-wrap { padding:1.8mm 4mm 1.5mm 4mm !important; }
         .party-fields { table-layout:fixed; border-collapse:collapse; margin:0; }
         .party-fields td { height:4.8mm; vertical-align:middle; font-size:11px; padding:0.5mm 1mm; }
@@ -45,7 +45,7 @@
         .party-fields .line { border-bottom:1px dotted #7f857a; padding-left:2.5mm; }
 
         /* ================= REPORT TABLE (green header, rounded) ================= */
-        .items-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid #71905e; border-radius:2.5mm; overflow:hidden; margin-bottom:2.5mm; }
+        .items-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid #285e10; border-radius:2.5mm; overflow:hidden; margin-bottom:2.5mm; }
         .items-table th { height:7mm; padding:1mm; color:#fff; background:#36751b; border-right:1px solid rgba(255,255,255,.5); font-size:10.8px; line-height:1.25; font-weight:700; text-align:center; vertical-align:middle; }
         .items-table th:last-child, .items-table td:last-child { border-right:0; }
         .items-table td { border-top:1px solid #c7cdc4; border-right:1px solid #c7cdc4; padding:1.6mm; font-size:10px; vertical-align:top; text-align:center; }
@@ -55,7 +55,7 @@
         /* ================= TOTALS ROW ================= */
         .items-table tfoot td { border-top:1.4px solid #36751b; background:#eaf2e5; font-weight:800; font-size:10.4px; padding:2mm 1.6mm; }
         .items-table tfoot .totals-label { text-align:right; padding-right:3mm; }
-        .items-table tfoot .closing-row td { background:#285e10; color:#fff; font-size:11px; }
+        .items-table tfoot .closing-row td { background:#c02026; color:#fff; font-size:11px; }
 
         /* ================= FOOTER BOX: note + signature ================= */
         .footer-box { table-layout:fixed; border-collapse:collapse; border:1px solid #799169; border-radius:2.4mm; overflow:hidden; margin-top:2mm; }
@@ -76,7 +76,7 @@
 
 @php
     $designPath = base_path('design');
-    $logoPath = $designPath.'/glass-grip-logo.png';
+    $logoPath = $designPath.'/logo.png';
     $signaturePath = $designPath.'/signature.png';
     $totalGst = $totals['cgst_amount'] + $totals['sgst_amount'] + $totals['igst_amount'];
 @endphp
@@ -86,10 +86,10 @@
 
     {{-- COMPANY HEADER --}}
     <table class="header-table"><tr>
-        <td class="logo-cell"><img src="{{ $logoPath }}" alt="GlassGrip Masking Tapes Logo"></td>
+        <td class="logo-cell"><img src="{{ $logoPath }}" alt="AmTronics Logo"></td>
         <td class="address-cell"><span style="font-size:12px;">{!! config('invoice.address') !!}<br>{{ config('invoice.city') }} - {{ config('invoice.postcode') }}<br>{{ config('invoice.state') }}, India.</span></td>
         <td class="contact-cell">
-            <table class="icon-row"><tr><td class="icon">☎</td><td style="vertical-align:middle;font-size:15px;">{{ config('invoice.phone') ?: '+91 8866477000' }}</td></tr><tr><td class="icon">✉</td><td style="vertical-align:middle;font-size:13px;">{{ config('invoice.email') ?: 'ankitgandhi8383@gmail.com' }}</td></tr></table>
+            <table class="icon-row"><tr><td class="icon">☎</td><td style="vertical-align:middle;font-size:15px;">{{ config('invoice.phone') ?: '+91 98240 22744' }}</td></tr><tr><td class="icon">✉</td><td style="vertical-align:middle;font-size:13px;">{{ config('invoice.email') ?: 'amtronics1959@gmail.com' }}</td></tr></table>
             <div class="contact-divider"></div>
             <table class="tax-table"><tr><td class="tax-label">PAN</td><td class="tax-colon">:</td><td>{{ config('invoice.pan_number') ?: 'ALTPG0235F' }}</td></tr><tr><td class="tax-label">GST No.</td><td class="tax-colon">:</td><td>{{ config('invoice.gst_number') ?: '24ALTPG0235F2ZD' }}</td></tr></table>
         </td>

@@ -39,7 +39,7 @@
     <div class="form-group"><label for="address_line_2">Address Line 2</label><input type="text" class="form-control" id="address_line_2" name="address_line_2" value="{{ old('address_line_2', $c->address_line_2 ?? '') }}"></div>
 </div>
 <div class="form-row">
-    <div class="form-group"><label for="state">State *</label><select class="form-control" id="state" name="state" required><option value="">Select state</option>@foreach(config('states') as $state)<option value="{{ $state }}" {{ old('state', $c->state ?? '') === $state ? 'selected' : '' }}>{{ $state }}</option>@endforeach</select></div>
+    <div class="form-group"><label for="state">State *</label><select class="form-control" id="state" name="state" required><option value="">Select state</option>@foreach(\App\Models\State::selectableNames($c->state ?? null) as $state)<option value="{{ $state }}" {{ old('state', $c->state ?? '') === $state ? 'selected' : '' }}>{{ $state }}</option>@endforeach</select></div>
     <div class="form-group"><label for="city">City *</label><input class="form-control" id="city" name="city" value="{{ old('city', $c->city ?? '') }}" required></div>
     <div class="form-group"><label for="pincode">Pincode *</label><input class="form-control" id="pincode" name="pincode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" value="{{ old('pincode', $c->pincode ?? '') }}" required></div>
 </div>

@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\CustomerLedger;
+use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class CustomerController extends Controller
 {
@@ -81,7 +83,7 @@ class CustomerController extends Controller
 
     public function update(Request $request, Customer $customer)
     {
-        $data = $this->validateData($request, $customer->id);
+        $data = $this->validateData($request, $customer);
 
         $oldOpening = (float) $customer->opening_balance;
         $customer->update($data);
@@ -157,7 +159,7 @@ class CustomerController extends Controller
         return back()->with('success', 'Ledger entry added successfully.');
     }
 
-    private function validateData(Request $request, $ignoreId = null): array
+    private function validateData(Request $request, ?Customer $customer = null): array
     {
         return $request->validate([
             'name' => ['required', 'string', 'max:255'],
@@ -166,7 +168,7 @@ class CustomerController extends Controller
             'email' => ['nullable', 'email', 'max:255'],
             'address' => ['required', 'string', 'max:2000'],
             'address_line_2' => ['nullable', 'string', 'max:2000'],
-            'state' => ['required', 'string', 'in:' . implode(',', config('states'))],
+            'state' => ['required', 'string', Rule::in(State::selectableNames($customer?->state))],
             'city' => ['required', 'string', 'max:100'],
             'pincode' => ['required', 'digits:6'],
             'gst_number' => ['nullable', 'string', 'max:50'],

@@ -1,5 +1,5 @@
 :root {
-  --color-primary: #447825;
+  --color-primary: #1a1d24;
   --color-primary-dark: #4aa014;
   --color-accent: #0f766e;
   --color-danger: #dc2626;
@@ -68,7 +68,7 @@ a:hover { text-decoration: underline; }
 
 .sidebar {
   width: var(--sidebar-width);
-  background: #447825;
+  background: #1a1d24;
   color: #fff;
   flex-shrink: 0;
   display: flex;
@@ -182,7 +182,7 @@ a:hover { text-decoration: underline; }
   justify-content: space-between;
 }
 
-.card-header h2, .card-header h3 { margin: 0; font-size: 16px;color:#447825; }
+.card-header h2, .card-header h3 { margin: 0; font-size: 16px;color:#1a1d24; }
 
 .card-body { padding: 20px; }
 
@@ -343,7 +343,7 @@ table.table th, table.table td {
 }
 
 table.table th {
-  background: #447825;
+  background: #1a1d24;
   color: #fff;
   font-weight: 600;
   text-transform: uppercase;

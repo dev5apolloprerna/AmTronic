@@ -13,9 +13,10 @@ and reporting (customer ledger history + sales report).
 ## Features
 
 ### Roles
-- **Super Admin** — manages Customers, Products, Users, Number Settings (prefix master), and views Reports.
-- **User** — created by Super Admin, can create/edit quotations (while draft), approve them, and record
-  customer ledger payments.
+- **Super Admin** — manages Customers, Products, Materials, Employees, Designations, States, Number Settings (prefix master), and views Reports.
+- **User** (employee) — created by Super Admin, can create/edit quotations (while draft), approve them, and
+  record customer ledger payments. **Only employees whose Designation is marked "can log in" (e.g. Sales)
+  can log in**; other employees are records only (no email/password needed).
 
 ### Customers (formerly "Vendor")
 - Full CRUD (Super Admin only).
@@ -26,7 +27,25 @@ and reporting (customer ledger history + sales report).
 - A running `balance_after` is stored on every ledger row so the ledger history is always reconcilable.
 
 ### Product Master
-- Full CRUD (Super Admin only): name, code, unit (default "Mtr"), HSN code, status.
+- Full CRUD (Super Admin only): name, code, unit (default "Mtr"), HSN code (4, 6 or 8 digits), status.
+
+### Masters (Super Admin only)
+- **Material Master** — name, code, unit (default "Nos"), HSN code (required, 4, 6 or 8 digits), status.
+- **Employees** (the `users` table) — each employee has an optional **Designation**; the list shows each
+  employee's outstanding **advance balance** (`SUM(adv_amount) - SUM(return_amount)` from `employee_advances`)
+  and whether they **can log in**.
+- **Designation Master** — name, status and a **Can log in** flag. A designation assigned to employees cannot
+  be deleted.
+- **Login rule** — a Super Admin can always log in. An employee can only if their designation has *Can log in*
+  ticked (`User::canLogin()`, checked at login; the future Android API should reuse it). For those employees
+  email + password are required; for all others they are optional and no password is stored. A blank password
+  on edit keeps the current one. Un-ticking the flag on a designation locks out its employees on their next
+  login; an already-open session lasts until logout. An admin cannot edit their own account into one that
+  can't log in.
+- **State Master** — replaces the old `config/states.php` list (seeded with the same 36 entries by the migration)
+  and feeds the State dropdowns on Customers and Quotation shipping. Customers/documents store the state *name*,
+  so a state that is in use — and Gujarat, the home state that drives the CGST/SGST vs IGST split — cannot be
+  renamed, deactivated or deleted.
 
 ### Quotations
 - A quotation belongs to one Customer and has many line items (products).
@@ -89,7 +108,7 @@ and reporting (customer ledger history + sales report).
 
    This creates:
    - Super Admin login: `admin@example.com` / `password`
-   - Sample User login: `user@example.com` / `password`
+   - Sample User login: `user@example.com` / `password` (designation "Sales", which is allowed to log in)
    - Default number settings for Quotations (`QUO-<year>-0001`) and Invoices (`INV-<year>-0001`)
 
    **Change these passwords immediately after first login in production.**

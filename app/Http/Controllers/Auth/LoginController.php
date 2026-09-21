@@ -39,6 +39,14 @@ class LoginController extends Controller
             ])->onlyInput('email');
         }
 
+        // Only Super Admins and employees whose designation allows login (e.g. Sales).
+        if (! $user->canLogin()) {
+            Auth::logout();
+            return back()->withErrors([
+                'email' => 'Your account is not enabled for login. Please contact the administrator.',
+            ])->onlyInput('email');
+        }
+
         $request->session()->regenerate();
 
         return redirect()->intended(route('dashboard'));

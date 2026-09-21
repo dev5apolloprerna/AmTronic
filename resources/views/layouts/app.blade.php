@@ -11,7 +11,7 @@
 <body>
     <div class="app-shell">
         <aside class="sidebar">
-            <div class="sidebar-brand"><img src="{{ asset('images/glass-grip-logo.png') }}" alt="Glass Grip"></div>
+            <div class="sidebar-brand"><img src="{{ asset('images/logo.png') }}" alt="Glass Grip"></div>
             <nav class="sidebar-nav">
                 <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
 
@@ -22,7 +22,10 @@
                     <div class="sidebar-section">Masters</div>
                     <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">Company</a>
                     <a href="{{ route('products.index') }}" class="{{ request()->routeIs('products.*') ? 'active' : '' }}">Products</a>
-                    <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">Users</a>
+                    <a href="{{ route('materials.index') }}" class="{{ request()->routeIs('materials.*') ? 'active' : '' }}">Materials</a>
+                    <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">Employees</a>
+                    <a href="{{ route('designations.index') }}" class="{{ request()->routeIs('designations.*') ? 'active' : '' }}">Designations</a>
+                    <a href="{{ route('states.index') }}" class="{{ request()->routeIs('states.*') ? 'active' : '' }}">States</a>
                     <a href="{{ route('number-settings.index') }}" class="{{ request()->routeIs('number-settings.*') ? 'active' : '' }}">Number Settings</a>
 
                     <div class="sidebar-section">Reports</div>

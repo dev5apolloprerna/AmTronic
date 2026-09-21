@@ -10,9 +10,11 @@ use App\Models\NumberSetting;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
+use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class QuotationController extends Controller
@@ -168,7 +170,7 @@ class QuotationController extends Controller
             return redirect()->route('quotations.show', $quotation)->with('error', 'Approved quotations cannot be edited.');
         }
 
-        $data = $this->validateData($request);
+        $data = $this->validateData($request, $quotation);
 
         $subTotal = $this->calculateItemsSubTotal($data['items']);
         if ((float) ($data['discount_amount'] ?? 0) > $subTotal) {
@@ -436,7 +438,7 @@ class QuotationController extends Controller
         }
     }
 
-    private function validateData(Request $request): array
+    private function validateData(Request $request, ?Quotation $quotation = null): array
     {
         return $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
@@ -448,7 +450,7 @@ class QuotationController extends Controller
             'shipping_address_different' => ['nullable', 'boolean'],
             'shipping_address' => ['required', 'string', 'max:2000'],
             'shipping_address_line_2' => ['nullable', 'string', 'max:2000'],
-            'shipping_state' => ['required', 'string', 'in:' . implode(',', config('states'))],
+            'shipping_state' => ['required', 'string', Rule::in(State::selectableNames($quotation?->shipping_state))],
             'shipping_city' => ['required', 'string', 'max:100'],
             'shipping_pincode' => ['required', 'digits:6'],
             'items' => ['required', 'array', 'min:1'],
