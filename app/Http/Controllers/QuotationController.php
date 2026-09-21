@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
 use App\Models\State;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -23,8 +24,23 @@ class QuotationController extends Controller
     public function index(Request $request)
     {
         $user = Auth::user();
-        $search = $request->get('search');
-        $status = $request->get('status');
+        $filters = $request->validate([
+            'search' => ['nullable', 'string', 'max:255'],
+            'status' => ['nullable', Rule::in(['draft', 'sent', 'approved', 'invoice_sent', 'rejected'])],
+            'sales_executive_id' => ['nullable', Rule::exists('users', 'id')->where('role', 'user')],
+            'date_from' => ['nullable', 'date'],
+            'date_to' => [
+                'nullable',
+                'date',
+                Rule::when($request->filled('date_from'), 'after_or_equal:date_from'),
+            ],
+        ]);
+
+        $search = $filters['search'] ?? null;
+        $status = $filters['status'] ?? null;
+        $salesExecutiveId = $user->isSuperAdmin() ? ($filters['sales_executive_id'] ?? null) : null;
+        $dateFrom = $filters['date_from'] ?? null;
+        $dateTo = $filters['date_to'] ?? null;
 
         $quotations = Quotation::with(['customer', 'user', 'invoice'])
             ->when(! $user->isSuperAdmin(), fn ($q) => $q->where('user_id', $user->id))
@@ -34,6 +50,10 @@ class QuotationController extends Controller
                         ->orWhereHas('customer', fn ($c) => $c->where('name', 'like', "%{$search}%"));
                 });
             })
+            ->when($salesExecutiveId, fn ($q) => $q->where('user_id', $salesExecutiveId))
+            ->when($dateFrom, fn ($q) => $q->whereDate('quotation_date', '>=', $dateFrom))
+            ->when($dateTo, fn ($q) => $q->whereDate('quotation_date', '<=', $dateTo))
+
             ->when($status === 'sent', fn ($q) => $q->where('status', 'draft')->where('document_status', 'quotation_sent'))
             ->when($status === 'invoice_sent', fn ($q) => $q->whereHas('invoice', fn ($invoice) => $invoice->where('document_status', 'invoice_approved')))
             ->when($status && ! in_array($status, ['sent', 'invoice_sent'], true), function ($q) use ($status) {
@@ -47,7 +67,19 @@ class QuotationController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return view('quotations.index', compact('quotations', 'search', 'status'));
+        $salesExecutives = $user->isSuperAdmin()
+            ? User::where('role', 'user')->orderBy('name')->get(['id', 'name', 'status'])
+            : collect();
+
+        return view('quotations.index', compact(
+            'quotations',
+            'search',
+            'status',
+            'salesExecutiveId',
+            'dateFrom',
+            'dateTo',
+            'salesExecutives',
+        ));
     }
 
     public function create()

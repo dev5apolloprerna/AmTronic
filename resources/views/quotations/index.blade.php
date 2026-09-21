@@ -25,8 +25,29 @@
                         <option value="rejected" {{ $status === 'rejected' ? 'selected' : '' }}>Rejected</option>
                     </select>
                 </div>
+                @if(auth()->user()->isSuperAdmin())
+                    <div class="form-group">
+                        <label for="sales_executive_id">Sales Executive</label>
+                        <select name="sales_executive_id" id="sales_executive_id" class="form-control">
+                            <option value="">All Sales Executives</option>
+                            @foreach($salesExecutives as $salesExecutive)
+                                <option value="{{ $salesExecutive->id }}" {{ (string) $salesExecutiveId === (string) $salesExecutive->id ? 'selected' : '' }}>
+                                    {{ $salesExecutive->name }}{{ $salesExecutive->status === 'inactive' ? ' (inactive)' : '' }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
+                @endif
+                <div class="form-group">
+                    <label for="date_from">From Date</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control" value="{{ $dateFrom }}">
+                </div>
+                <div class="form-group">
+                    <label for="date_to">To Date</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control" value="{{ $dateTo }}">
+                </div>
                 <button type="submit" class="btn btn-secondary">Filter</button>
-                @if($search || $status)
+                @if($search || $status || $salesExecutiveId || $dateFrom || $dateTo)
                     <a href="{{ route('quotations.index') }}" class="btn btn-secondary">Clear</a>
                 @endif
             </form>

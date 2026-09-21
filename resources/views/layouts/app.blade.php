@@ -24,6 +24,7 @@
                     <a href="{{ route('products.index') }}" class="{{ request()->routeIs('products.*') ? 'active' : '' }}">Products</a>
                     <a href="{{ route('materials.index') }}" class="{{ request()->routeIs('materials.*') ? 'active' : '' }}">Materials</a>
                     <a href="{{ route('users.index') }}" class="{{ request()->routeIs('users.*') ? 'active' : '' }}">Employees</a>
+                    <a href="{{ route('attendance.index') }}" class="{{ request()->routeIs('attendance.*') ? 'active' : '' }}">Daily Attendance</a>
                     <a href="{{ route('designations.index') }}" class="{{ request()->routeIs('designations.*') ? 'active' : '' }}">Designations</a>
                     <a href="{{ route('states.index') }}" class="{{ request()->routeIs('states.*') ? 'active' : '' }}">States</a>
                     <a href="{{ route('number-settings.index') }}" class="{{ request()->routeIs('number-settings.*') ? 'active' : '' }}">Number Settings</a>

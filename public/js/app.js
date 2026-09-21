@@ -1,10 +1,38 @@
 document.addEventListener('DOMContentLoaded', function () {
   initSidebarToggle();
   initConfirmDelete();
-    initModals();
+  initModals();
   initQuotationBuilder();
   initEmployeeForm();
+  initAttendanceForm();
 });
+
+function initAttendanceForm() {
+  var form = document.querySelector('form[data-attendance-form]');
+  if (!form) return;
+
+  var selectAll = form.querySelector('#select-all-employees');
+  var checkboxes = Array.from(form.querySelectorAll('.employee-attendance-checkbox'));
+  var count = form.querySelector('[data-selected-count]');
+
+  function syncSelection() {
+    var selected = checkboxes.filter(function (checkbox) { return checkbox.checked; }).length;
+    if (count) count.textContent = selected + (selected === 1 ? ' employee selected' : ' employees selected');
+    if (selectAll) {
+      selectAll.checked = checkboxes.length > 0 && selected === checkboxes.length;
+      selectAll.indeterminate = selected > 0 && selected < checkboxes.length;
+    }
+  }
+
+  if (selectAll) {
+    selectAll.addEventListener('change', function () {
+      checkboxes.forEach(function (checkbox) { checkbox.checked = selectAll.checked; });
+      syncSelection();
+    });
+  }
+  checkboxes.forEach(function (checkbox) { checkbox.addEventListener('change', syncSelection); });
+  syncSelection();
+}
 
 /* ---------------- Employee form: login fields only for accounts that can log in ---------------- */
 // Super Admins and employees whose designation is flagged "can log in" (e.g. Sales) need an

@@ -86,6 +86,14 @@ and reporting (customer ledger history + sales report).
   range, all transactions, and running balance.
 - **Sales Report** — filter by date range and/or customer, see invoice totals and GST collected.
 
+## API Documentation
+
+The complete text reference for the sales executive API—including every URL,
+request body, response example, authentication header, filter, and common error
+response—is available in [`API.md`](API.md).
+
+For local development, API URLs start with `http://127.0.0.1:8000/api`.
+
 ## Setup Instructions
 
 1. **Install dependencies** (requires PHP 8.2+, Composer, Node not required):
