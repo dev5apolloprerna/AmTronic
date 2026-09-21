@@ -14,3 +14,150 @@ ON DELETE SET NULL;
 
 ALTER TABLE `payments`
 ADD UNIQUE KEY `payments_receipt_number_unique` (`receipt_number`);
+
+
+-- =====================================================================
+-- Masters update (2026-09-21): State Master, Designation Master,
+-- Material Master, employee designation + employee advances table.
+-- Same as running the five 2026_09_21_* migrations. Use EITHER this file
+-- OR `php artisan migrate`, not both.
+-- =====================================================================
+
+-- State Master (replaces the old config/states.php list; seeded with the same 36 entries)
+CREATE TABLE `states` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `name` varchar(100) NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL,
+  `updated_at` timestamp NULL,
+  UNIQUE KEY `states_name_unique` (`name`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+INSERT INTO `states` (`name`, `status`, `created_at`, `updated_at`) VALUES
+    ('Andaman and Nicobar Islands', 'active', NOW(), NOW()),
+    ('Andhra Pradesh', 'active', NOW(), NOW()),
+    ('Arunachal Pradesh', 'active', NOW(), NOW()),
+    ('Assam', 'active', NOW(), NOW()),
+    ('Bihar', 'active', NOW(), NOW()),
+    ('Chandigarh', 'active', NOW(), NOW()),
+    ('Chhattisgarh', 'active', NOW(), NOW()),
+    ('Dadra and Nagar Haveli and Daman and Diu', 'active', NOW(), NOW()),
+    ('Delhi', 'active', NOW(), NOW()),
+    ('Goa', 'active', NOW(), NOW()),
+    ('Gujarat', 'active', NOW(), NOW()),
+    ('Haryana', 'active', NOW(), NOW()),
+    ('Himachal Pradesh', 'active', NOW(), NOW()),
+    ('Jammu and Kashmir', 'active', NOW(), NOW()),
+    ('Jharkhand', 'active', NOW(), NOW()),
+    ('Karnataka', 'active', NOW(), NOW()),
+    ('Kerala', 'active', NOW(), NOW()),
+    ('Ladakh', 'active', NOW(), NOW()),
+    ('Lakshadweep', 'active', NOW(), NOW()),
+    ('Madhya Pradesh', 'active', NOW(), NOW()),
+    ('Maharashtra', 'active', NOW(), NOW()),
+    ('Manipur', 'active', NOW(), NOW()),
+    ('Meghalaya', 'active', NOW(), NOW()),
+    ('Mizoram', 'active', NOW(), NOW()),
+    ('Nagaland', 'active', NOW(), NOW()),
+    ('Odisha', 'active', NOW(), NOW()),
+    ('Puducherry', 'active', NOW(), NOW()),
+    ('Punjab', 'active', NOW(), NOW()),
+    ('Rajasthan', 'active', NOW(), NOW()),
+    ('Sikkim', 'active', NOW(), NOW()),
+    ('Tamil Nadu', 'active', NOW(), NOW()),
+    ('Telangana', 'active', NOW(), NOW()),
+    ('Tripura', 'active', NOW(), NOW()),
+    ('Uttar Pradesh', 'active', NOW(), NOW()),
+    ('Uttarakhand', 'active', NOW(), NOW()),
+    ('West Bengal', 'active', NOW(), NOW());
+
+-- Employee Designation Master
+CREATE TABLE `designations` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `name` varchar(100) NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL,
+  `updated_at` timestamp NULL,
+  UNIQUE KEY `designations_name_unique` (`name`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Material Master (with HSN code)
+CREATE TABLE `materials` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `name` varchar(191) NOT NULL,
+  `code` varchar(191) NULL,
+  `description` text NULL,
+  `unit` varchar(20) NOT NULL DEFAULT 'Nos',
+  `hsn_code` varchar(10) NOT NULL,
+  `status` enum('active','inactive') NOT NULL DEFAULT 'active',
+  `created_at` timestamp NULL,
+  `updated_at` timestamp NULL,
+  UNIQUE KEY `materials_code_unique` (`code`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- Employee designation (users table = employees)
+ALTER TABLE `users` ADD `designation_id` bigint unsigned NULL AFTER `role`;
+ALTER TABLE `users` ADD CONSTRAINT `users_designation_id_foreign`
+  FOREIGN KEY (`designation_id`) REFERENCES `designations` (`id`) ON DELETE RESTRICT;
+
+-- Employee advances (list screen shows outstanding = SUM(adv_amount) - SUM(return_amount))
+CREATE TABLE `employee_advances` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  `employee_id` bigint unsigned NOT NULL,
+  `adv_amount` decimal(12,2) NOT NULL,
+  `adv_date` date NOT NULL,
+  `return_amount` decimal(12,2) NOT NULL DEFAULT 0,
+  `return_date` date NULL,
+  `created_at` timestamp NULL,
+  `updated_at` timestamp NULL
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+ALTER TABLE `employee_advances` ADD CONSTRAINT `employee_advances_employee_id_foreign`
+  FOREIGN KEY (`employee_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT;
+
+-- OPTIONAL: only if this server ALSO uses `php artisan migrate`, record these so it won't re-run them.
+-- SET @b = (SELECT COALESCE(MAX(`batch`),0) + 1 FROM `migrations`);
+-- INSERT INTO `migrations` (`migration`, `batch`) VALUES
+--   ('2026_09_21_000001_create_states_table', @b),
+--   ('2026_09_21_000002_create_designations_table', @b),
+--   ('2026_09_21_000003_create_materials_table', @b),
+--   ('2026_09_21_000004_add_designation_to_users_table', @b),
+--   ('2026_09_21_000005_create_employee_advances_table', @b);
+
+
+-- =====================================================================
+-- Login rule + HSN (2026-09-21): only designations flagged `can_login`
+-- (e.g. Sales) may log in. Same as running the two migrations
+-- 2026_09_21_000006 and 2026_09_21_000007.
+-- Run AFTER the "Masters update" block above. Use EITHER this file
+-- OR `php artisan migrate`, not both.
+-- (The HSN change 5-6 -> 4/6/8 digits needs no SQL: the columns already fit 8 digits.)
+-- =====================================================================
+
+ALTER TABLE `designations` ADD `can_login` tinyint(1) NOT NULL DEFAULT 0 AFTER `name`;
+
+-- Nobody who can log in today may lose access:
+-- 1) regular users with no designation are the sales staff -> "Sales" (created if missing)
+INSERT INTO `designations` (`name`, `status`, `can_login`, `created_at`, `updated_at`)
+SELECT 'Sales', 'active', 0, NOW(), NOW() FROM DUAL
+WHERE EXISTS (SELECT 1 FROM `users` WHERE `role` = 'user' AND `designation_id` IS NULL)
+  AND NOT EXISTS (SELECT 1 FROM `designations` WHERE `name` = 'Sales');
+
+UPDATE `users`
+SET `designation_id` = (SELECT `id` FROM `designations` WHERE `name` = 'Sales')
+WHERE `role` = 'user' AND `designation_id` IS NULL
+  AND EXISTS (SELECT 1 FROM `designations` WHERE `name` = 'Sales');
+
+-- 2) any designation already held by a regular user keeps its holders' access
+UPDATE `designations`
+SET `can_login` = 1
+WHERE `id` IN (SELECT DISTINCT `designation_id` FROM `users` WHERE `role` = 'user' AND `designation_id` IS NOT NULL);
+
+-- Employees whose designation cannot log in need no email or password
+-- (the unique index on email is kept; MySQL allows many NULLs in a unique column)
+ALTER TABLE `users` MODIFY `email` varchar(255) NULL, MODIFY `password` varchar(255) NULL;
+
+-- OPTIONAL: only if this server ALSO uses `php artisan migrate`, record these so it won't re-run them.
+-- SET @b = (SELECT COALESCE(MAX(`batch`),0) + 1 FROM `migrations`);
+-- INSERT INTO `migrations` (`migration`, `batch`) VALUES
+--   ('2026_09_21_000006_add_can_login_to_designations_table', @b),
+--   ('2026_09_21_000007_make_user_credentials_nullable', @b);

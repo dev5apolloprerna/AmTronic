@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Rules\HsnCode;
 use Illuminate\Http\Request;
 
 class ProductController extends Controller
@@ -76,7 +77,7 @@ class ProductController extends Controller
             'code' => ['nullable', 'string', 'max:100', 'unique:products,code' . ($ignoreId ? ",{$ignoreId}" : '')],
             'description' => ['nullable', 'string', 'max:2000'],
             'unit' => ['required', 'string', 'max:20'],
-            'hsn_code' => ['required', 'digits_between:5,6'],
+            'hsn_code' => ['required', new HsnCode],
             'status' => ['required', 'in:active,inactive'],
         ]);
     }

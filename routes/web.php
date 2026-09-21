@@ -3,13 +3,16 @@
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\DeliveryChallanController;
 use App\Http\Controllers\NumberSettingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\StateController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -69,6 +72,9 @@ Route::middleware('guest')->group(function () {
         Route::resource('customers', CustomerController::class)->except(['show']);
         Route::resource('products', ProductController::class);
         Route::resource('users', UserController::class)->except(['show']);
+        Route::resource('materials', MaterialController::class)->except(['show']);
+        Route::resource('designations', DesignationController::class)->except(['show']);
+        Route::resource('states', StateController::class)->except(['show']);
 
         Route::get('number-settings', [NumberSettingController::class, 'index'])->name('number-settings.index');
         Route::put('number-settings/{numberSetting}', [NumberSettingController::class, 'update'])->name('number-settings.update');
@@ -87,7 +93,7 @@ Route::middleware('guest')->group(function () {
 Route::get('/check-logo-path', function () {
     return [
         'public_path' => public_path(),
-        'logo_path' => public_path('images/glass-grip-logo.png'),
-        'exists' => file_exists(public_path('images/glass-grip-logo.png')),
+        'logo_path' => public_path('images/logo.png'),
+        'exists' => file_exists(public_path('images/logo.png')),
     ];
 });

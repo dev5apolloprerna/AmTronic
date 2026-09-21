@@ -7,7 +7,7 @@
    <div class="form-group"><label>Address Line 2</label><input type="text" class="form-control" name="shipping_address_line_2" id="shipping_address_line_2" value="{{ old('shipping_address_line_2', $q->shipping_address_line_2 ?? '') }}"></div>
   </div>
   <div class="form-row">
-   <div class="form-group"><label>State *</label><select class="form-control" name="shipping_state" id="shipping_state" required><option value="">Select state</option>@foreach(config('states') as $state)<option value="{{ $state }}" {{ old('shipping_state', $q->shipping_state ?? '') === $state ? 'selected' : '' }}>{{ $state }}</option>@endforeach</select></div>
+   <div class="form-group"><label>State *</label><select class="form-control" name="shipping_state" id="shipping_state" required><option value="">Select state</option>@foreach(\App\Models\State::selectableNames($q->shipping_state ?? null) as $state)<option value="{{ $state }}" {{ old('shipping_state', $q->shipping_state ?? '') === $state ? 'selected' : '' }}>{{ $state }}</option>@endforeach</select></div>
    <div class="form-group"><label>City *</label><input class="form-control" name="shipping_city" id="shipping_city" value="{{ old('shipping_city', $q->shipping_city ?? '') }}" required></div>
    <div class="form-group"><label>Pincode *</label><input class="form-control" name="shipping_pincode" id="shipping_pincode" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" value="{{ old('shipping_pincode', $q->shipping_pincode ?? '') }}" required></div>
   </div>

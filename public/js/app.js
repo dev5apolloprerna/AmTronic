@@ -3,7 +3,48 @@ document.addEventListener('DOMContentLoaded', function () {
   initConfirmDelete();
     initModals();
   initQuotationBuilder();
+  initEmployeeForm();
 });
+
+/* ---------------- Employee form: login fields only for accounts that can log in ---------------- */
+// Super Admins and employees whose designation is flagged "can log in" (e.g. Sales) need an
+// email + password; everyone else is a record only. The server enforces this too - this just
+// hides the password fields and toggles `required` so the form matches.
+function initEmployeeForm() {
+  var form = document.querySelector('form[data-employee-form]');
+  if (!form) return;
+
+  var role = form.querySelector('#role');
+  var designation = form.querySelector('#designation_id');
+  var email = form.querySelector('#email');
+  var password = form.querySelector('#password');
+  var confirmation = form.querySelector('#password_confirmation');
+  var loginBlock = form.querySelector('[data-login-only]');
+  var marks = form.querySelectorAll('[data-login-required-mark]');
+  // Editing someone who already has a password: a blank password means "keep it".
+  var passwordRequired = form.getAttribute('data-password-required') === '1';
+
+  if (!role || !designation || !email || !password || !loginBlock) return;
+
+  function canLogin() {
+    if (role.value === 'super_admin') return true;
+    var option = designation.options[designation.selectedIndex];
+    return !!option && option.getAttribute('data-can-login') === '1';
+  }
+
+  function sync() {
+    var on = canLogin();
+    loginBlock.hidden = !on;
+    email.required = on;
+    password.required = on && passwordRequired;
+    if (confirmation) confirmation.required = on && passwordRequired;
+    marks.forEach(function (mark) { mark.hidden = !on; });
+  }
+
+  role.addEventListener('change', sync);
+  designation.addEventListener('change', sync);
+  sync();
+}
 
 /* ---------------- Accessible modal dialogs ---------------- */
 function initModals() {

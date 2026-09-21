@@ -18,7 +18,7 @@
     </div>
     <div class="form-group">
         <label for="hsn_code">HSN Code</label>
-        <input type="text" class="form-control" id="hsn_code" name="hsn_code" inputmode="numeric" pattern="[0-9]{5,6}" minlength="5" maxlength="6" value="{{ old('hsn_code', $p->hsn_code ?? '') }}" required>
+        <input type="text" class="form-control" id="hsn_code" name="hsn_code" inputmode="numeric" pattern="([0-9]{4}|[0-9]{6}|[0-9]{8})" minlength="4" maxlength="8" title="HSN code must be 4, 6 or 8 digits" value="{{ old('hsn_code', $p->hsn_code ?? '') }}" required>
     </div>
     <div class="form-group">
         <label for="status">Status *</label>

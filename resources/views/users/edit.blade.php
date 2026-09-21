@@ -1,15 +1,15 @@
 @extends('layouts.app')
 
-@section('title', 'Edit User')
+@section('title', 'Edit Employee')
 
 @section('content')
     <div class="card">
         <div class="card-header">
-            <h3>Edit User</h3>
+            <h3>Edit Employee</h3>
             <a href="{{ route('users.index') }}" class="btn btn-secondary btn-sm">&larr; Back</a>
         </div>
         <div class="card-body">
-            <form method="POST" action="{{ route('users.update', $user) }}">
+            <form method="POST" action="{{ route('users.update', $user) }}" data-employee-form data-password-required="{{ filled($user->password) ? '0' : '1' }}">
                 @csrf
                 @method('PUT')
                 <div class="form-row">
@@ -18,19 +18,21 @@
                         <input type="text" class="form-control" id="name" name="name" value="{{ old('name', $user->name) }}" required>
                     </div>
                     <div class="form-group">
-                        <label for="email">Email *</label>
-                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $user->email) }}" required>
+                        <label for="email">Email <span data-login-required-mark>*</span></label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ old('email', $user->email) }}">
                     </div>
                 </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="password">New Password</label>
-                        <input type="password" class="form-control" id="password" name="password">
-                        <div class="form-hint">Leave blank to keep current password.</div>
-                    </div>
-                    <div class="form-group">
-                        <label for="password_confirmation">Confirm New Password</label>
-                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                <div data-login-only>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="password">New Password</label>
+                            <input type="password" class="form-control" id="password" name="password">
+                            <div class="form-hint">{{ filled($user->password) ? 'Leave blank to keep current password.' : 'This employee has no password yet - set one so they can log in.' }}</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="password_confirmation">Confirm New Password</label>
+                            <input type="password" class="form-control" id="password_confirmation" name="password_confirmation">
+                        </div>
                     </div>
                 </div>
                 <div class="form-row">
@@ -42,6 +44,16 @@
                         </select>
                     </div>
                     <div class="form-group">
+                        <label for="designation_id">Designation</label>
+                        <select class="form-control" id="designation_id" name="designation_id">
+                            <option value="">-- None --</option>
+                            @foreach($designations as $designation)
+                                <option value="{{ $designation->id }}" data-can-login="{{ $designation->can_login ? 1 : 0 }}" {{ (string) old('designation_id', $user->designation_id) === (string) $designation->id ? 'selected' : '' }}>{{ $designation->name }}{{ $designation->status === 'inactive' ? ' (inactive)' : '' }}</option>
+                            @endforeach
+                        </select>
+                        <div class="form-hint">Only designations marked "can log in" (e.g. Sales) get login access.</div>
+                    </div>
+                    <div class="form-group">
                         <label for="status">Status *</label>
                         <select class="form-control" id="status" name="status" required>
                             <option value="active" {{ old('status', $user->status) === 'active' ? 'selected' : '' }}>Active</option>
@@ -49,7 +61,7 @@
                         </select>
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Update User</button>
+                <button type="submit" class="btn btn-primary">Update Employee</button>
             </form>
         </div>
     </div>

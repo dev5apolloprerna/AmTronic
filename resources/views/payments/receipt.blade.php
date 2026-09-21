@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>{{ $payment->receipt_number }}</title>
     <style>
-        :root { --green:#4f8128; --green-dark:#2f6d16; --green-deep:#285e10; --ink:#141b21; --paper:#fff; }
+        :root { --green:#4f8128; --green-dark:#2f6d16; --green-deep:#c02026; --ink:#141b21; --paper:#fff; }
         * { box-sizing: border-box; }
         html, 
         body { margin:0; padding:0; background:#fff; color:#111; font-family: DejaVu Sans, Arial, Helvetica,, sans-serif; font-size:9.6px; }
@@ -38,7 +38,7 @@
         /* ================= RECEIVED FROM BOX ================= */
         .party-box { width:100%; border:1px solid #8ea37d; border-radius:2.2mm; border-collapse:separate !important; border-spacing:0 !important; overflow:hidden !important; background:#fff; margin-bottom:2.2mm; }
         .party-box > tbody > tr > td { padding:0 !important; border:0 !important; vertical-align:top; }
-        .party-tag-bar { height:6.5mm; line-height:6.5mm; padding:0 3.5mm; color:#fff; background:#285e10; font-size:10px; font-weight:800; letter-spacing:.3px; }
+        .party-tag-bar { height:6.5mm; line-height:6.5mm; padding:0 3.5mm; color:#fff; background:#c02026; font-size:10px; font-weight:800; letter-spacing:.3px; }
         .party-fields-wrap { padding:1.8mm 3.5mm 1.6mm 3.5mm !important; }
         .party-fields td { height:4.2mm; vertical-align:middle; font-size:9.2px; }
         .party-fields .label { width:32%; white-space:nowrap; }
@@ -72,7 +72,7 @@
 
 @php
     $designPath = base_path('design');
-    $logoPath = $designPath.'/glass-grip-logo.png';
+    $logoPath = $designPath.'/logo.png';
     $signaturePath = $designPath.'/signature.png';
 @endphp
 
@@ -81,10 +81,10 @@
 
     {{-- COMPANY HEADER (compact) --}}
     <table class="header-table"><tr>
-        <td class="logo-cell"><img src="{{ $logoPath }}" alt="GlassGrip Masking Tapes Logo"></td>
+        <td class="logo-cell"><img src="{{ $logoPath }}" alt="AmTronics Logo"></td>
         <td class="contact-cell">
-            <div class="phone">☎ {{ config('invoice.phone') ?: '+91 8866477000' }}</div>
-            <div>✉ {{ config('invoice.email') ?: 'ankitgandhi8383@gmail.com' }}</div>
+            <div class="phone">☎ {{ config('invoice.phone') ?: '+91 98240 22744' }}</div>
+            <div>✉ {{ config('invoice.email') ?: 'amtronics1959@gmail.com' }}</div>
         </td>
     </tr></table>
     <div class="address-strip">{{ config('invoice.address') }}, {{ config('invoice.city') }} - {{ config('invoice.postcode') }}, {{ config('invoice.state') }}, India.</div>

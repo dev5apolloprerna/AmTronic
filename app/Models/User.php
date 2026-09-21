@@ -16,6 +16,7 @@ class User extends Authenticatable
         'password',
         'role',
         'status',
+        'designation_id',
     ];
 
     protected $hidden = [
@@ -36,10 +37,42 @@ class User extends Authenticatable
         return $this->role === 'super_admin';
     }
 
+    /**
+     * Whether this account may log in (web now, Android app later).
+     *
+     * Super Admins always can. Employees can only if their designation is
+     * flagged can_login (e.g. "Sales"); any other designation - or none - is a
+     * record without access, even if a password is stored. Inactive accounts
+     * never can.
+     */
+    public function canLogin(): bool
+    {
+        if ($this->status !== 'active') {
+            return false;
+        }
+
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return (bool) $this->designation?->can_login;
+    }
+
     public function quotations()
     {
         return $this->hasMany(Quotation::class);
     }
+
+    public function designation()
+    {
+        return $this->belongsTo(Designation::class);
+    }
+
+    public function advances()
+    {
+        return $this->hasMany(EmployeeAdvance::class, 'employee_id');
+    }
+
     public function collectedPayments()
     {
         return $this->hasMany(Payment::class, 'employee_id');

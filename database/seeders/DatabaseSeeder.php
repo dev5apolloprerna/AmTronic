@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Designation;
 use App\Models\NumberSetting;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -25,6 +26,12 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // "Sales" is the designation whose employees may log in (web + Android app).
+        $sales = Designation::firstOrCreate(
+            ['name' => 'Sales'],
+            ['status' => 'active', 'can_login' => true]
+        );
+
         // Sample regular user
         User::firstOrCreate(
             ['email' => 'user@example.com'],
@@ -32,6 +39,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Sales User',
                 'password' => Hash::make('password'),
                 'role' => 'user',
+                'designation_id' => $sales->id,
                 'status' => 'active',
             ]
         );
