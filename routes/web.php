@@ -7,6 +7,7 @@ use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\DeliveryChallanController;
+use App\Http\Controllers\EmployeeAttendanceController;
 use App\Http\Controllers\NumberSettingController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
@@ -75,6 +76,10 @@ Route::middleware('guest')->group(function () {
         Route::resource('materials', MaterialController::class)->except(['show']);
         Route::resource('designations', DesignationController::class)->except(['show']);
         Route::resource('states', StateController::class)->except(['show']);
+        
+        Route::get('attendance', [EmployeeAttendanceController::class, 'index'])->name('attendance.index');
+        Route::post('attendance', [EmployeeAttendanceController::class, 'store'])->name('attendance.store');
+
 
         Route::get('number-settings', [NumberSettingController::class, 'index'])->name('number-settings.index');
         Route::put('number-settings/{numberSetting}', [NumberSettingController::class, 'update'])->name('number-settings.update');

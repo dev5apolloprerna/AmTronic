@@ -550,3 +550,24 @@ body.modal-open { overflow: hidden; }
     padding-top: 12px;
   }
 }
+
+.attendance-header { gap: 20px; flex-wrap: wrap; }
+.attendance-header p { margin-top: 5px; }
+.attendance-date-form,
+.attendance-toolbar {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.attendance-date-form label { font-size: 13px; font-weight: 600; }
+.attendance-date-form .form-control { width: auto; }
+.attendance-toolbar {
+  margin-bottom: 18px;
+}
+.attendance-toolbar .form-group { margin-bottom: 0; min-width: 190px; }
+.attendance-checkbox-cell { width: 46px; text-align: center !important; }
+.attendance-checkbox-cell input { width: 17px; height: 17px; cursor: pointer; }
+.pill-attendance-present { background: #dcfce7; color: #166534; }
+.pill-attendance-absent { background: #fee2e2; color: #991b1b; }
+.pill-attendance-half_day { background: #fef3c7; color: #92400e; }

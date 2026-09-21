@@ -1,0 +1,538 @@
+# Sales Executive API
+
+This document lists every mobile/API endpoint with its URL, request, and example
+response. All URLs below are relative to the application URL.
+
+## Base URL and headers
+
+For local development, the base URL is:
+
+```text
+http://127.0.0.1:8000/api
+```
+
+Send these headers with every request:
+
+```text
+Accept: application/json
+Content-Type: application/json
+```
+
+Except for login, every endpoint also requires the token returned by login:
+
+```text
+Authorization: Bearer <token>
+```
+
+The API is available only to active employees whose designation permits API
+login. A user can access only quotations created by that same user.
+
+## Endpoint list
+
+| Method | URL | Purpose |
+| --- | --- | --- |
+| `POST` | `/api/login` | Log in and receive a bearer token. |
+| `POST` | `/api/logout` | Invalidate the current bearer token. |
+| `PUT` | `/api/change-password` | Change the current user's password. |
+| `GET` | `/api/dashboard` | Get quotation counts and recent quotations. |
+| `GET` | `/api/quotation-lookups` | Get customers, active products, and states for the quotation form. |
+| `GET` | `/api/quotations` | List the current user's quotations. |
+| `POST` | `/api/quotations` | Create a quotation. |
+| `GET` | `/api/quotations/{quotation}` | Get one quotation. |
+| `PUT/PATCH` | `/api/quotations/{quotation}` | Update an editable quotation. |
+| `DELETE` | `/api/quotations/{quotation}` | Delete an editable quotation. |
+| `POST` | `/api/quotations/{quotation}/mark-sent` | Mark a new quotation as sent. |
+| `POST` | `/api/quotations/{quotation}/approve` | Approve a sent quotation. |
+| `POST` | `/api/quotations/{quotation}/reject` | Reject a new quotation. |
+
+## Authentication
+
+### Login
+
+```text
+POST /api/login
+Authorization: not required
+```
+
+Request:
+
+```json
+{
+  "email": "sales@example.com",
+  "password": "password"
+}
+```
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Login successful.",
+  "token": "plain-text-bearer-token",
+  "token_type": "Bearer",
+  "user": {
+    "id": 2,
+    "name": "Sales Executive",
+    "email": "sales@example.com",
+    "designation": "Sales Executive"
+  }
+}
+```
+
+Invalid credentials return `422`; an account without API access returns `403`.
+
+### Logout
+
+```text
+POST /api/logout
+```
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Logged out successfully."
+}
+```
+
+The token used for this request is no longer valid.
+
+### Change password
+
+```text
+PUT /api/change-password
+```
+
+Request:
+
+```json
+{
+  "current_password": "password",
+  "password": "new-secret",
+  "password_confirmation": "new-secret"
+}
+```
+
+The new password must contain at least 6 characters, and its confirmation must
+match.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Password changed successfully."
+}
+```
+
+## Dashboard and form data
+
+### Dashboard
+
+```text
+GET /api/dashboard
+```
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "data": {
+    "quotation_counts": {
+      "all": 8,
+      "created": 2,
+      "sent": 1,
+      "approved": 4,
+      "rejected": 1
+    },
+    "recent_quotations": [
+      {
+        "id": 25,
+        "quotation_number": "QUO-2026-0025",
+        "quotation_date": "2026-09-21",
+        "customer": {
+          "id": 7,
+          "name": "Example Customer"
+        },
+        "status": "Quotation Created",
+        "status_code": "draft",
+        "total_amount": 1180,
+        "editable": true
+      }
+    ]
+  }
+}
+```
+
+`recent_quotations` contains at most the 10 newest records.
+
+### Quotation lookups
+
+```text
+GET /api/quotation-lookups
+```
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "data": {
+    "customers": [
+      {
+        "id": 7,
+        "name": "Example Customer",
+        "address": "Main Road",
+        "state": "Gujarat",
+        "city": "Surat",
+        "pincode": "395001"
+      }
+    ],
+    "products": [
+      {
+        "id": 3,
+        "name": "Glass Roll",
+        "code": "ROLL-1",
+        "unit": "MTR",
+        "hsn_code": "1234",
+        "status": "active"
+      }
+    ],
+    "states": ["Gujarat", "Maharashtra"]
+  }
+}
+```
+
+Customer and product objects can contain additional database fields. The
+products list includes active products only.
+
+## Quotations
+
+### List quotations
+
+```text
+GET /api/quotations?status=created&search=QUO-2026&per_page=15
+```
+
+All query parameters are optional:
+
+- `status`: `created`, `sent`, `approved`, `rejected`, or `invoice_sent`.
+- `search`: quotation number or customer name, up to 255 characters.
+- `per_page`: number of results from 1 to 100; the default is 15.
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "current_page": 1,
+  "data": [
+    {
+      "id": 25,
+      "quotation_number": "QUO-2026-0025",
+      "quotation_date": "2026-09-21",
+      "customer": {
+        "id": 7,
+        "name": "Example Customer"
+      },
+      "status": "Quotation Created",
+      "status_code": "draft",
+      "total_amount": 1180,
+      "editable": true
+    }
+  ],
+  "first_page_url": "http://127.0.0.1:8000/api/quotations?page=1",
+  "from": 1,
+  "last_page": 1,
+  "last_page_url": "http://127.0.0.1:8000/api/quotations?page=1",
+  "links": [],
+  "next_page_url": null,
+  "path": "http://127.0.0.1:8000/api/quotations",
+  "per_page": 15,
+  "prev_page_url": null,
+  "to": 1,
+  "total": 1
+}
+```
+
+Laravel supplies the complete `links` array in the real paginated response; it
+is shortened above for readability.
+
+### Create quotation
+
+```text
+POST /api/quotations
+```
+
+Request:
+
+```json
+{
+  "customer_id": 7,
+  "quotation_date": "2026-09-21",
+  "gst_applicable": true,
+  "discount_amount": 0,
+  "admin_charges": 0,
+  "material_handling_charges": 0,
+  "shipping_address_different": false,
+  "shipping_address": "Main Road",
+  "shipping_address_line_2": null,
+  "shipping_state": "Gujarat",
+  "shipping_city": "Surat",
+  "shipping_pincode": "395001",
+  "items": [
+    {
+      "product_id": 3,
+      "despatch_to": null,
+      "size_mtr": 10,
+      "no_of_rolls": 2,
+      "price_per_mtr": 500
+    }
+  ]
+}
+```
+
+Required fields are `customer_id`, `quotation_date`, the shipping address,
+state, city and 6-digit pincode, plus at least one item. For every item,
+`product_id`, `size_mtr`, `no_of_rolls`, and `price_per_mtr` are required.
+`no_of_rolls` must be a whole number. The discount cannot exceed the items'
+subtotal.
+
+Successful response (`201 Created`):
+
+```json
+{
+  "message": "Quotation created successfully.",
+  "data": {
+    "id": 25,
+    "quotation_number": "QUO-2026-0025",
+    "quotation_date": "2026-09-21",
+    "customer": {
+      "id": 7,
+      "name": "Example Customer"
+    },
+    "status": "Quotation Created",
+    "status_code": "draft",
+    "total_amount": 1180,
+    "editable": true,
+    "quotation": {
+      "id": 25,
+      "quotation_number": "QUO-2026-0025",
+      "customer_id": 7,
+      "user_id": 2,
+      "status": "draft",
+      "sub_total": "1000.00",
+      "gst_amount": "180.00",
+      "total_amount": "1180.00",
+      "items": [
+        {
+          "id": 41,
+          "product_id": 3,
+          "size_mtr": "10.00",
+          "no_of_rolls": "2.00",
+          "price_per_mtr": "500.00",
+          "amount": "1000.00"
+        }
+      ]
+    }
+  }
+}
+```
+
+The nested `quotation` object also includes its other stored fields, timestamps,
+customer, product data, and invoice (when one exists).
+
+### Get one quotation
+
+```text
+GET /api/quotations/{quotation}
+```
+
+Example URL: `GET /api/quotations/25`
+
+Request body: none.
+
+Successful response (`200 OK`): the same `data` object shown in the create
+response, without the top-level `message`.
+
+### Update quotation
+
+```text
+PUT /api/quotations/{quotation}
+PATCH /api/quotations/{quotation}
+```
+
+Example URL: `PUT /api/quotations/25`
+
+Request: send the complete quotation payload shown under **Create quotation**.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Quotation updated successfully.",
+  "data": {
+    "id": 25,
+    "quotation_number": "QUO-2026-0025",
+    "status": "Quotation Created",
+    "status_code": "draft",
+    "editable": true,
+    "quotation": {}
+  }
+}
+```
+
+The actual `data` contains the complete summary and nested quotation described
+under **Create quotation**. Sent, approved, or rejected quotations cannot be
+updated and return `409 Conflict`.
+
+### Delete quotation
+
+```text
+DELETE /api/quotations/{quotation}
+```
+
+Example URL: `DELETE /api/quotations/25`
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Quotation deleted successfully."
+}
+```
+
+Sent, approved, or rejected quotations cannot be deleted and return `409
+Conflict`.
+
+### Mark quotation as sent
+
+```text
+POST /api/quotations/{quotation}/mark-sent
+```
+
+Example URL: `POST /api/quotations/25/mark-sent`
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Quotation marked as sent.",
+  "data": {
+    "id": 25,
+    "status": "Quotation Sent",
+    "status_code": "sent",
+    "editable": false,
+    "quotation": {}
+  }
+}
+```
+
+Only a newly created quotation can be marked as sent. The actual `data`
+contains the complete quotation response.
+
+### Approve quotation
+
+```text
+POST /api/quotations/{quotation}/approve
+```
+
+Example URL: `POST /api/quotations/25/approve`
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Quotation approved successfully.",
+  "data": {
+    "id": 25,
+    "status": "Quotation Approved",
+    "status_code": "approved",
+    "editable": false,
+    "quotation": {}
+  }
+}
+```
+
+The quotation must first be marked as sent. The actual `data` contains the
+complete quotation response.
+
+### Reject quotation
+
+```text
+POST /api/quotations/{quotation}/reject
+```
+
+Example URL: `POST /api/quotations/25/reject`
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Quotation rejected successfully.",
+  "data": {
+    "id": 25,
+    "status": "Rejected",
+    "status_code": "rejected",
+    "editable": false,
+    "quotation": {}
+  }
+}
+```
+
+Only a newly created quotation can be rejected. The actual `data` contains the
+complete quotation response.
+
+## Common error responses
+
+Missing, expired, or disabled-account token (`401 Unauthorized`):
+
+```json
+{
+  "message": "Unauthenticated."
+}
+```
+
+Trying to access another user's quotation (`403 Forbidden`):
+
+```json
+{
+  "message": "You do not have permission to access this quotation."
+}
+```
+
+Validation error (`422 Unprocessable Entity`):
+
+```json
+{
+  "message": "The shipping pincode field must be 6 digits.",
+  "errors": {
+    "shipping_pincode": [
+      "The shipping pincode field must be 6 digits."
+    ]
+  }
+}
+```
+
+Invalid workflow operation (`409 Conflict`):
+
+```json
+{
+  "message": "Send the quotation before approving it."
+}
+```
+
+Unknown quotation IDs return `404 Not Found`.
