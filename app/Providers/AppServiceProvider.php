@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     */
+    public function register(): void
+    {
+        //
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+        // Fix "Specified key was too long" error on older MySQL/MariaDB
+        // versions (utf8mb4 + default 255-length unique/index columns
+        // can exceed the max key length). 191 chars * 4 bytes = 764 bytes,
+        // safely under the 767/1000 byte limits.
+        Schema::defaultStringLength(191);
+
+        Paginator::useBootstrapFive();
+    }
+}

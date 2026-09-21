@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GlassGrip Quotation</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  <style>
+    :root {
+      --green: #4f8128;
+      --green-dark: #2f6d16;
+      --green-deep: #285e10;
+      --green-light: #e5efd8;
+      --ink: #141b21;
+      --line: #99a692;
+      --soft-line: #cbd1c8;
+      --paper: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: #ececec;
+      color: #111;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10.3px;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      border-spacing: 0;
+    }
+
+    .quotation-page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 12px auto;
+      padding: 8mm 8mm 6mm;
+      background: var(--paper);
+      box-shadow: 0 0 8px rgba(0, 0, 0, .22);
+      overflow: hidden;
+    }
+
+    /* ================= HEADER ================= */
+    .header-table {
+      table-layout: fixed;
+    }
+
+    .header-table td {
+      text-align: start;
+    }
+
+    .logo-cell {
+      width: 39%;
+    }
+
+    .logo-cell img {
+      display: block;
+      width: 280px;
+      max-height: 140px;
+      object-fit: contain;
+    }
+
+    .address-cell {
+      width: 31%;
+      border-left: 1px solid #555;
+      border-right: 1px solid #555;
+      padding: 2mm 7mm;
+      line-height: 1.65;
+      font-size: 10.5px;
+    }
+
+    .contact-cell {
+      width: 30%;
+      padding-left: 7mm;
+      line-height: 1.65;
+      font-size: 10.5px;
+    }
+
+    .icon-row td {
+      padding: 0 0 0mm;
+      vertical-align: top;
+    }
+
+    .icon {
+      width: 28px;
+      color: var(--green);
+      font-size: 20px;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .contact-divider {
+      border-top: 1px solid var(--green);
+      margin: 1.5mm 0 1mm;
+    }
+
+    .tax-table td {
+      padding: 0;
+      font-size: 12.2px;
+    }
+
+    .tax-label {
+      width: 34%;
+      font-size: 14px !important;
+      font-weight: 700;
+    }
+
+    .tax-colon {
+      width: 8%;
+      text-align: center;
+    }
+
+    .accent-table {
+      margin-top: 4.5mm;
+      table-layout: fixed;
+    }
+
+    .accent-green {
+      width: 8%;
+      height: 2.1mm;
+      background: var(--green);
+      clip-path: polygon(0 0, 100% 0, 88% 100%, 0 100%);
+    }
+
+    .accent-dark {
+      height: 2.1mm;
+      background: var(--ink);
+      clip-path: polygon(1.2% 0, 100% 0, 100% 100%, 0 100%);
+    }
+
+    /* ============== QUOTATION MAIN AREA (MATCHED TO REFERENCE) ============== */
+    .quotation-top-layout {
+      table-layout: fixed;
+      margin-top: 5mm;
+      margin-bottom: 4mm;
+    }
+
+    .quotation-title-cell {
+      width: 52%;
+      padding-right: 6mm;
+      vertical-align: middle;
+    }
+
+    .quotation-title {
+      font-size: 34px;
+      font-weight: 800;
+      color: #0d1720;
+      letter-spacing: 0.8px;
+      line-height: 1;
+      text-transform: uppercase;
+      text-shadow: 1.4px 1.4px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    .quotation-meta-cell {
+      width: 48%;
+      border-left: 1px solid #6f756b;
+      padding-left: 6mm;
+      vertical-align: top;
+    }
+
+    .quote-meta {
+      width: 100%;
+      table-layout: fixed;
+      margin-top: 0.5mm;
+    }
+
+    .quote-meta td {
+      height: 10mm;
+      vertical-align: middle;
+      font-size: 13.5px;
+    }
+
+    .quote-meta .label {
+      width: 34%;
+      font-weight: 700;
+    }
+
+    .quote-meta .colon {
+      width: 7%;
+      text-align: center;
+    }
+
+    .quote-meta .line {
+      border-bottom: 1px solid #333;
+    }
+
+    .party-meta-layout {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      margin-bottom: 4.2mm;
+    }
+
+    .party-meta-layout > tbody > tr > td {
+      vertical-align: top;
+    }
+
+    .bill-cell {
+      width: 50%;
+      padding-right: 2mm !important;
+      border: 0 !important;
+      vertical-align: top;
+    }
+
+    .ship-cell {
+      width: 50%;
+      padding-left: 2mm !important;
+      border: 0 !important;
+      vertical-align: top;
+    }
+
+    .party-box {
+      width: 100%;
+      height: 52mm;
+      border: 1px solid #8ea37d;
+      border-radius: 2.6mm;
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      overflow: hidden !important;
+      background: #ffffff;
+      background-clip: padding-box;
+    }
+
+    .party-box > tbody > tr > td {
+      padding: 0 !important;
+      border: 0 !important;
+      border-radius: 2.4mm !important;
+      overflow: hidden !important;
+      vertical-align: top;
+    }
+
+    .party-tag {
+      width: auto;
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      margin: 0;
+    }
+
+    .party-tag-text {
+      height: 9mm;
+      padding: 0 4.5mm;
+      color: #fff;
+      background: linear-gradient(90deg, var(--green-deep), #478b26);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .3px;
+      white-space: nowrap;
+      vertical-align: middle;
+      border-radius: 0 0 0 0;
+    }
+
+    .party-tag-text i {
+      margin-right: 1.6mm;
+      font-size: 12px;
+    }
+
+    .party-tag-slant {
+      width: 4mm;
+      background: linear-gradient(90deg, #478b26, #3f781f);
+      clip-path: polygon(0 0, 100% 0, 0 100%);
+    }
+
+    .party-fields-wrap {
+      padding: 3.2mm 3.6mm 3mm 3.6mm !important;
+    }
+
+    .party-fields {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+      margin: 0;
+    }
+
+    .party-fields td {
+      height: 6.1mm;
+      vertical-align: middle;
+      font-size: 11.8px;
+    }
+
+    .party-fields .label {
+      width: 34%;
+      white-space: nowrap;
+    }
+
+    .party-fields .colon {
+      width: 6%;
+      text-align: center;
+    }
+
+    .party-fields .line {
+      border-bottom: 1px dotted #7f857a;
+    }
+
+    .party-fields .address-space td {
+      height: 5.6mm;
+    }
+    /* Product table */
+    .product-table {
+      table-layout: fixed;
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid #71905e;
+      border-radius: 2.5mm;
+      overflow: hidden;
+    }
+
+    .product-table th {
+      height: 10mm;
+      padding: 1mm;
+      color: #fff;
+      background: linear-gradient(#528e2f, #36751b);
+      border-right: 1px solid rgba(255, 255, 255, .5);
+      font-size: 14.8px;
+      line-height: 1.25;
+      font-weight: 700;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .product-table th:last-child {
+      border-right: 0;
+    }
+
+    .product-table td {
+      height: 7.15mm;
+      border-top: 1px solid #c7cdc4;
+      border-right: 1px solid #c7cdc4;
+      padding: .7mm 1.4mm;
+      font-size: 15px;
+      vertical-align: middle;
+    }
+
+    .product-table td:last-child {
+      border-right: 0;
+    }
+
+    .center {
+      text-align: center;
+    }
+
+    /* Terms + totals */
+    .bottom-layout {
+      table-layout: fixed;
+      margin-top: 2.2mm;
+    }
+
+    .terms-cell {
+      width: 55%;
+      padding: 1.5mm 5mm 0 1mm;
+      vertical-align: top;
+    }
+
+    .totals-cell {
+      width: 45%;
+      vertical-align: top;
+    }
+
+    .terms-title-table {
+      width: auto;
+      margin-bottom: 1mm;
+    }
+
+    .terms-title-table td {
+      vertical-align: middle;
+    }
+
+    .terms-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      color: #fff;
+      background: var(--green);
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .terms-heading {
+      padding-left: 2mm;
+      font-size: 15px;
+      font-weight: 800;
+    }
+
+    .terms-list {
+      table-layout: fixed;
+    }
+
+    .terms-list td {
+      height: 5.3mm;
+      font-size: 12.8px;
+      vertical-align: middle;
+    }
+
+    .term-number {
+      width: 7mm;
+      text-align: right;
+      padding-right: 2mm;
+    }
+
+    .term-line {
+      display: inline-block;
+      width: 45mm;
+      border-bottom: 1px solid #777;
+      /* transform: translateY(-1mm); */
+    }
+
+    .totals-table {
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid #799169;
+      border-radius: 2.4mm;
+      overflow: hidden;
+    }
+
+    .totals-table td {
+      height: 6.8mm;
+      border-bottom: 1px solid #aeb8a8;
+      border-right: 1px solid #aeb8a8;
+      padding: 0 3mm;
+      font-size: 13.2px;
+      vertical-align: middle;
+    }
+
+    .totals-table tr:last-child td {
+      border-bottom: 0;
+    }
+
+    .totals-table td:last-child {
+      border-right: 0;
+    }
+
+    .total-label {
+      width: 51%;
+    }
+
+    .rupee {
+      width: 11%;
+      text-align: center;
+      font-size: 13px !important;
+      border-right: none !important;
+    }
+
+    .total-value {
+      width: 38%;
+      text-align: right;
+    }
+
+    .grand-total .total-label {
+      color: #fff;
+      background: linear-gradient(90deg, var(--green-dark), #498e28);
+      font-weight: 800;
+      font-size: 11px;
+    }
+
+    .grand-total .rupee,
+    .grand-total .total-value {
+      font-weight: 800;
+    }
+
+    .signature-table {
+      table-layout: fixed;
+      margin-top: 4mm;
+    }
+
+    .signature-spacer {
+      width: 55%;
+    }
+
+    .signature-cell {
+      width: 45%;
+      text-align: center;
+      vertical-align: top;
+    }
+
+    .company-sign {
+      font-size: 13.8px;
+      margin-bottom: 10mm;
+    }
+
+    .company-sign strong {
+      color: var(--green-dark);
+      font-size: 13.8px;
+    }
+
+    .sign-line {
+      width: 45mm;
+      margin: 0 auto 2mm;
+      border-top: 1px solid #222;
+    }
+
+    .authorized {
+      font-size: 13.5px;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 0;
+    }
+
+    @media print {
+
+      html,
+      body {
+        width: 210mm;
+        height: 297mm;
+        background: #fff;
+      }
+
+      .quotation-page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0;
+        box-shadow: none;
+        page-break-after: avoid;
+        page-break-inside: avoid;
+      }
+
+      
+    }
+  </style>
+  <style>
+    .company-sign {
+  font-size: 13.8px;
+  margin-bottom: 1.5mm;
+}
+
+.company-sign strong {
+  color: var(--green-dark);
+  font-size: 13.8px;
+}
+
+.signature-image-wrap {
+  width: 52mm;
+  height: 18mm;
+  margin: 0 auto 1mm;
+  text-align: center;
+  overflow: hidden;
+}
+
+.signature-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+}
+
+.sign-line {
+  width: 45mm;
+  margin: 0 auto 2mm;
+  border-top: 1px solid #222;
+}
+
+.authorized {
+  font-size: 13.5px;
+}
+  </style>
+</head>
+
+<body>
+  <div class="quotation-page">
+    <!-- COMPANY HEADER -->
+    <table class="header-table" aria-label="Company header">
+      <tr>
+        <td class="logo-cell">
+          <img src="glass-grip-logo.png" alt="GlassGrip Masking Tapes Logo" />
+        </td>
+        <td class="address-cell">
+          <table class="icon-row">
+            <tr>
+              <td class="icon"><i class="fa fa-map-marker"></i></td>
+              <td>
+                <p style="font-size: 13px; font-weight: 500; margin: 0;">10, Sahyog Estate,<br />
+                  Behind Anand Hotel,<br />
+                  Narol–Isanpur Highway,<br />
+                  Ahmedabad – 382443,<br />
+                  Gujarat, India.</p>
+
+              </td>
+            </tr>
+          </table>
+        </td>
+        <td class="contact-cell">
+          <table class="icon-row">
+            <tr>
+              <td class="icon"><i class="fa fa-phone"></i></td>
+              <td style="vertical-align: middle;"><span style="font-size: 15px;">+91 886647000</span></td>
+            </tr>
+            <tr>
+              <td class="icon"><i class="fa fa-envelope-o"></i></td>
+              <td style="vertical-align: middle;font-size: 13px;"> ankitgandhi8383@gmail.com</td>
+            </tr>
+          </table>
+          <div class="contact-divider"></div>
+          <table class="tax-table">
+            <tr>
+              <td class="tax-label">PAN</td>
+              <td class="tax-colon">:</td>
+              <td>ALTPG0235F</td>
+            </tr>
+            <tr>
+              <td class="tax-label">GST No.</td>
+              <td class="tax-colon">:</td>
+              <td>24ALTPG0235F2ZD</td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <table class="accent-table" aria-hidden="true">
+      <tr>
+        <td class="accent-green"></td>
+        <td class="accent-dark"></td>
+      </tr>
+    </table>
+
+    <!-- QUOTATION TITLE + META (MATCHED TO REFERENCE) -->
+    <table class="quotation-top-layout">
+      <tr>
+        <td class="quotation-title-cell">
+          <div class="quotation-title">QUOTATION</div>
+        </td>
+        <td class="quotation-meta-cell">
+          <table class="quote-meta">
+            <tr>
+              <td class="label">Quotation No.</td>
+              <td class="colon">:</td>
+              <td class="line"></td>
+            </tr>
+            <tr>
+              <td class="label">Date</td>
+              <td class="colon">:</td>
+              <td class="line"></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- BILL TO / SHIP TO BOXES -->
+    <table class="party-meta-layout">
+      <tr>
+        <td class="bill-cell">
+          <table class="party-box">
+            <tr>
+              <td>
+                <table class="party-tag">
+                  <tr>
+                    <td class="party-tag-text"><i class="fa fa-building"></i>BILL TO</td>
+                    <td class="party-tag-slant"></td>
+                  </tr>
+                </table>
+                <div class="party-fields-wrap">
+                  <table class="party-fields">
+                    <tr>
+                      <td class="label">Company Name</td>
+                      <td class="colon">:</td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr>
+                      <td class="label">Address</td>
+                      <td class="colon">:</td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr class="address-space">
+                      <td></td>
+                      <td></td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr class="address-space">
+                      <td></td>
+                      <td></td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr>
+                      <td class="label">GST No.</td>
+                      <td class="colon">:</td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr>
+                      <td class="label">State &amp; State Code</td>
+                      <td class="colon">:</td>
+                      <td class="line"></td>
+                    </tr>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+
+        <td class="ship-cell">
+          <table class="party-box">
+            <tr>
+              <td>
+                <table class="party-tag">
+                  <tr>
+                    <td class="party-tag-text"><i class="fa fa-building"></i>SHIP TO</td>
+                    <td class="party-tag-slant"></td>
+                  </tr>
+                </table>
+                <div class="party-fields-wrap">
+                  <table class="party-fields">
+                    <tr>
+                      <td class="label">Company Name</td>
+                      <td class="colon">:</td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr>
+                      <td class="label">Address</td>
+                      <td class="colon">:</td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr class="address-space">
+                      <td></td>
+                      <td></td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr class="address-space">
+                      <td></td>
+                      <td></td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr>
+                      <td class="label">GST No.</td>
+                      <td class="colon">:</td>
+                      <td class="line"></td>
+                    </tr>
+                    <tr>
+                      <td class="label">State &amp; State Code</td>
+                      <td class="colon">:</td>
+                      <td class="line"></td>
+                    </tr>
+                  </table>
+                </div>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- GOODS TABLE -->
+    <table class="product-table">
+      <colgroup>
+        <col style="width:5%" />
+        <col style="width:35%" />
+        <col style="width:12%" />
+        <col style="width:16.5%" />
+        <col style="width:15.5%" />
+        <col style="width:16%" />
+      </colgroup>
+      <thead>
+        <tr>
+          <th>Sr.</th>
+          <th>Description of Goods</th>
+          <th>HSN Code</th>
+          <th>Quantity (Rolls)</th>
+          <th>Rate (Per Pc)</th>
+          <th>Amount</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="center">1</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">2</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">3</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">4</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">5</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">6</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">7</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">8</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">9</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr>
+          <td class="center">10</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- TERMS AND TOTALS -->
+    <table class="bottom-layout">
+      <tr>
+        <td class="terms-cell">
+          <table class="terms-title-table">
+            <tr>
+              <td class="terms-icon"><i class="fa fa-file-text-o"></i></td>
+              <td class="terms-heading">Terms &amp; Conditions:</td>
+            </tr>
+          </table>
+          <table class="terms-list">
+            <tr>
+              <td class="term-number">1.</td>
+              <td>This quotation is valid for 15 days from the date of issue.</td>
+            </tr>
+            <tr>
+              <td class="term-number">2.</td>
+              <td>Prices are subject to change without prior notice.</td>
+            </tr>
+            <tr>
+              <td class="term-number">3.</td>
+              <td>Payment Terms: <span class="term-line"></span></td>
+            </tr>
+            <tr>
+              <td class="term-number">4.</td>
+              <td>Delivery: <span class="term-line"></span></td>
+            </tr>
+            <tr>
+              <td class="term-number">5.</td>
+              <td>Subject to Ahmedabad Jurisdiction.</td>
+            </tr>
+          </table>
+        </td>
+        <td class="totals-cell">
+          <table class="totals-table">
+            <tr>
+              <td class="total-label">Sub Total</td>
+              <td class="rupee">₹</td>
+              <td class="total-value"></td>
+            </tr>
+            <tr>
+              <td class="total-label">CGST</td>
+              <td class="rupee">₹</td>
+              <td class="total-value"></td>
+            </tr>
+            <tr>
+              <td class="total-label">SGST</td>
+              <td class="rupee">₹</td>
+              <td class="total-value"></td>
+            </tr>
+            <tr>
+              <td class="total-label">Round Off</td>
+              <td class="rupee">₹</td>
+              <td class="total-value"></td>
+            </tr>
+            <tr class="grand-total">
+              <td class="total-label">Grand Total</td>
+              <td class="rupee">₹</td>
+              <td class="total-value"></td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+
+    <!-- SIGNATURE -->
+    <table class="signature-table">
+  <tr>
+    <td class="signature-spacer"></td>
+
+    <td class="signature-cell">
+      <div class="company-sign">
+        For <strong>GlassGrip Masking Tapes</strong>
+      </div>
+
+      <div class="signature-image-wrap">
+        <img
+          src="signature.png"
+          class="signature-image"
+          alt="Authorised Signature"
+        />
+      </div>
+
+      <div class="sign-line"></div>
+
+      <div class="authorized">
+        Authorised Signatory
+      </div>
+    </td>
+  </tr>
+</table>
+  </div>
+</body>
+
+</html>

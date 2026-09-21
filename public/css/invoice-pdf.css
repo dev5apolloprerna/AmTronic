@@ -1,0 +1,180 @@
+/* invoice-pdf.css — Tax Invoice design (dompdf-safe: no flexbox/grid/vars) */
+
+@page {
+    size: A4;
+    margin: 14mm 12mm;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    font-family: 'DejaVu Sans', Helvetica, Arial, sans-serif;
+    font-size: 9px;
+    color: #222;
+    margin: 0;
+    padding: 0;
+}
+
+.invoice-box {
+    width: 100%;
+}
+
+/* ---------- Title ---------- */
+.tax-heading {
+    text-align: center;
+    font-size: 17px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+/* ---------- Shared table reset ---------- */
+table {
+    width: 100%;
+    margin: 0;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+td, th {
+    padding: 4px 6px;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+/* ---------- Header grids: seller-meta & buyer-meta (identical structure) ---------- */
+.document-header {
+    border: 0.75px solid #333;
+    margin: 0; /* no gap/overlap between stacked tables */
+}
+.document-header td {
+    border: 0.75px solid #333;
+}
+.document-header .seller {
+    vertical-align: top;
+}
+.company-name {
+    font-size: 12px;
+    font-weight: bold;
+    margin-bottom: 2px;
+}
+.company-logo {
+    display: block;
+    width: 125px;
+    height: auto;
+    margin-bottom: 3px;
+}
+.company-address {
+    margin-top: 3px;
+    font-size: 7.5px;
+    line-height: 1.35;
+}
+.company-tagline {
+    font-size: 8px;
+    color: #555;
+}
+.header-label {
+    font-size: 7.5px;
+    color: #555;
+}
+.document-header td strong {
+    font-size: 9px;
+}
+.buyer-header {
+    border-top: none;
+}
+.block-label {
+    font-size: 7.5px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin-bottom: 2px;
+}
+
+/* ---------- Items table (incl. subtotal / tax / total rows) ---------- */
+.items {
+    border: 0.75px solid #333;
+    border-top: none;
+}
+.items th {
+    background: #ededed;
+    border: 0.75px solid #333;
+    font-size: 8px;
+    font-weight: bold;
+    text-align: left;
+}
+.items td {
+    border: 0.75px solid #333;
+    font-size: 8.5px;
+    height: 26px; /* fixed minimum row height so the grid always looks even */
+}
+.items td small {
+    display: block;
+    color: #666;
+    font-size: 7px;
+    margin-top: 1px;
+}
+.text-center { text-align: center; }
+.text-right  { text-align: right; }
+.serial { width: 5%; }
+
+/* keep column widths exactly as set by <colgroup>; don't let long
+   words in the Description column stretch other columns */
+.invoice-items { table-layout: fixed; }
+.invoice-items td, .invoice-items th { overflow: hidden; }
+
+/* subtotal / discount / tax rows: plain continuation rows, same grid */
+.summary-row td {
+    height: 20px;
+    font-size: 8.5px;
+}
+
+/* total row: bold, slightly taller */
+.total-row td {
+    height: 24px;
+    font-size: 9.5px;
+    font-weight: bold;
+    border-top: 1px solid #333;
+}
+
+/* ---------- Amount in words ---------- */
+.amount-words {
+    border: 0.75px solid #333;
+    border-top: none;
+    margin: 0;
+}
+.amount-words td {
+    font-size: 8.5px;
+}
+.amount-words span {
+    color: #555;
+    font-size: 7.5px;
+}
+
+/* ---------- Declaration + signature ---------- */
+.declaration-signature {
+    border: 0.75px solid #333;
+    border-top: none;
+}
+.declaration-signature td {
+    width: 65%;
+    font-size: 8px;
+    line-height: 1.4;
+}
+.declaration-signature td.signature {
+    width: 35%;
+    text-align: right;
+    border-left: 0.75px solid #333;
+    font-size: 8.5px;
+}
+.signature-space {
+    height: 26px;
+}
+
+/* ---------- Footer note ---------- */
+.bottom-bar {
+    text-align: center;
+    font-size: 7.5px;
+    font-style: italic;
+    color: #666;
+    margin-top: 8px;
+}

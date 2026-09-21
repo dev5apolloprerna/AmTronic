@@ -1,0 +1,16 @@
+ALTER TABLE `payments` MODIFY COLUMN `receipt_number` VARCHAR(191) NULL, ADD UNIQUE KEY `payments_receipt_number_unique` (`receipt_number`);
+
+
+ALTER TABLE `payments`
+ADD COLUMN `employee_id` BIGINT UNSIGNED NULL AFTER `customer_id`,
+ADD COLUMN `receipt_number` VARCHAR(191) NULL AFTER `employee_id`,
+MODIFY COLUMN `invoice_id` BIGINT UNSIGNED NULL;
+
+ALTER TABLE `payments`
+ADD CONSTRAINT `payments_employee_id_foreign`
+FOREIGN KEY (`employee_id`)
+REFERENCES `users` (`id`)
+ON DELETE SET NULL;
+
+ALTER TABLE `payments`
+ADD UNIQUE KEY `payments_receipt_number_unique` (`receipt_number`);

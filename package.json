@@ -1,0 +1,6 @@
+{
+    "private": true,
+    "name": "vendor-quotation-manager",
+    "version": "1.0.0",
+    "description": "Plain CSS/JS assets served from public/css and public/js - no build step required."
+}
