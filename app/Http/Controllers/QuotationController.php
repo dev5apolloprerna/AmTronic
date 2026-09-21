@@ -6,6 +6,7 @@ use App\Models\Customer;
 use App\Models\CustomerLedger;
 // use App\Models\DeliveryChallan;
 use App\Models\Invoice;
+use App\Models\Material;
 use App\Models\NumberSetting;
 use App\Models\Product;
 use App\Models\Quotation;
@@ -52,9 +53,9 @@ class QuotationController extends Controller
     public function create()
     {
         $customers = Customer::orderBy('name')->get();
-        $products = Product::where('status', 'active')->orderBy('name')->get();
+        ['products' => $products, 'materials' => $materials] = $this->itemChoices();
 
-        return view('quotations.create', compact('customers', 'products'));
+        return view('quotations.create', compact('customers', 'products', 'materials'));
     }
 
     public function store(Request $request)
@@ -94,7 +95,7 @@ class QuotationController extends Controller
     public function show(Quotation $quotation)
     {
         $this->authorizeAccess($quotation);
-        $quotation->load(['items.product', 'customer', 'user', 'approvedBy', 'invoice.payments']);
+        $quotation->load(['items.product', 'items.material', 'customer', 'user', 'approvedBy', 'invoice.payments']);
 
         $totalPaid = $quotation->invoice?->totalPaid();
         $balanceDue = $quotation->invoice?->balanceDue();
@@ -112,6 +113,7 @@ class QuotationController extends Controller
 
     $quotation->loadMissing([
         'items.product',
+        'items.material',
         'customer',
         'user',
     ]);
@@ -155,11 +157,11 @@ class QuotationController extends Controller
             return redirect()->route('quotations.show', $quotation)->with('error', 'Approved quotations cannot be edited.');
         }
 
-        $quotation->load('items.product');
+        $quotation->load('items.product', 'items.material');
         $customers = Customer::orderBy('name')->get();
-        $products = Product::where('status', 'active')->orderBy('name')->get();
+        ['products' => $products, 'materials' => $materials] = $this->itemChoices($quotation);
 
-        return view('quotations.edit', compact('quotation', 'customers', 'products'));
+        return view('quotations.edit', compact('quotation', 'customers', 'products', 'materials'));
     }
 
     public function update(Request $request, Quotation $quotation)
@@ -345,11 +347,13 @@ class QuotationController extends Controller
                 QuotationItem::create([
                     'quotation_id' => $copy->id,
                     'product_id' => $item->product_id,
+                    'material_id' => $item->material_id,
+                    'description' => $item->description,
                     'despatch_to' => $item->despatch_to,
                     'size_mtr' => $item->size_mtr,
-                    'no_of_rolls' => $item->no_of_rolls,
+                    'no_of_rolls' => $item->getRawOriginal('no_of_rolls'),
                     'total_mtr' => $item->total_mtr,
-                    'price_per_mtr' => $item->price_per_mtr,
+                    'price_per_mtr' => $item->getRawOriginal('price_per_mtr'),
                     'amount' => $item->amount,
                 ]);
             }
@@ -364,17 +368,20 @@ class QuotationController extends Controller
     }
 
     /**
-     * AJAX: return the last price charged to this customer for this product.
+     * AJAX: the last rate charged to this customer for this item (a product or
+     * a material), taken from their most recent approved quotation.
      */
     public function lastPrice(Request $request)
     {
         $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
-            'product_id' => ['required', 'exists:products,id'],
+            'item' => ['required', 'string'],
         ]);
 
-        $item = QuotationItem::query()
-            ->where('product_id', $request->product_id)
+        $parsed = QuotationItem::parseKey($request->item);
+
+        $item = $parsed ? QuotationItem::query()
+            ->where('quotation_items.' . $parsed[0] . '_id', $parsed[1])
             ->whereHas('quotation', function ($q) use ($request) {
                 $q->where('customer_id', $request->customer_id)
                     ->where('status', 'approved');
@@ -382,12 +389,32 @@ class QuotationController extends Controller
             ->join('quotations', 'quotations.id', '=', 'quotation_items.quotation_id')
             ->orderByDesc('quotations.approved_at')
             ->select('quotation_items.*')
-            ->first();
+            ->first() : null;
 
         return response()->json([
             'found' => (bool) $item,
-            'price_per_mtr' => $item ? (float) $item->price_per_mtr : null,
+            'rate' => $item ? $item->rate : null,
         ]);
+    }
+
+    /**
+     * Products and Materials offered in the item dropdown: everything active,
+     * plus anything already on $quotation, so editing a quotation whose item
+     * was later made inactive does not silently drop it.
+     *
+     * @return array{products: \Illuminate\Support\Collection, materials: \Illuminate\Support\Collection}
+     */
+    private function itemChoices(?Quotation $quotation = null): array
+    {
+        $usedProducts = $quotation ? $quotation->items->pluck('product_id')->filter()->all() : [];
+        $usedMaterials = $quotation ? $quotation->items->pluck('material_id')->filter()->all() : [];
+
+        return [
+            'products' => Product::where(fn ($q) => $q->where('status', 'active')->orWhereIn('id', $usedProducts))
+                ->orderBy('name')->get(),
+            'materials' => Material::where(fn ($q) => $q->where('status', 'active')->orWhereIn('id', $usedMaterials))
+                ->orderBy('name')->get(),
+        ];
     }
 
     private function authorizeAccess(Quotation $quotation): void
@@ -402,14 +429,12 @@ class QuotationController extends Controller
      * Compute the gross sub total (before discount) from the raw submitted items array.
      * Used to validate that discount_amount never exceeds the sub total.
      */
-   private function calculateItemsSubTotal(array $items): float
+    private function calculateItemsSubTotal(array $items): float
     {
         $subTotal = 0.0;
 
         foreach ($items as $item) {
-            $noOfRolls = (int) ($item['no_of_rolls'] ?? 0);
-            $pricePerMtr = (float) ($item['price_per_mtr'] ?? 0);
-            $subTotal += $noOfRolls * $pricePerMtr;   // was: $sizeMtr * $noOfRolls * $pricePerMtr
+            $subTotal += round((float) ($item['qty'] ?? 0) * (float) ($item['rate'] ?? 0), 2);
         }
 
         return $subTotal;
@@ -418,22 +443,25 @@ class QuotationController extends Controller
     private function syncItems(Quotation $quotation, array $items): void
     {
         foreach ($items as $item) {
-            $sizeMtr = (float) $item['size_mtr'];
-            $noOfRolls = (int) $item['no_of_rolls'];
-            $pricePerMtr = (float) $item['price_per_mtr'];
-            $totalMtr = $sizeMtr * $noOfRolls;      // keep — still shown as "Total Mtr" in views/PDF
-            $amount = $noOfRolls * $pricePerMtr;    // was: $totalMtr * $pricePerMtr
+            [$type, $id] = QuotationItem::parseKey($item['item']);
 
+            $qty = round((float) $item['qty'], 2);
+            $rate = round((float) $item['rate'], 2);
+
+            // Only lines made before the change carry a roll size; it is passed
+            // through untouched so editing an old draft does not lose it.
+            $sizeMtr = (float) ($item['size_mtr'] ?? 0) > 0 ? round((float) $item['size_mtr'], 2) : null;
 
             QuotationItem::create([
                 'quotation_id' => $quotation->id,
-                'product_id' => $item['product_id'],
-                'despatch_to' => $item['despatch_to'] ?? null,
+                'product_id' => $type === QuotationItem::TYPE_PRODUCT ? $id : null,
+                'material_id' => $type === QuotationItem::TYPE_MATERIAL ? $id : null,
+                'description' => filled($item['description'] ?? null) ? trim($item['description']) : null,
                 'size_mtr' => $sizeMtr,
-                'no_of_rolls' => $noOfRolls,
-                'total_mtr' => $totalMtr,
-                'price_per_mtr' => $pricePerMtr,
-                'amount' => $amount,
+                'no_of_rolls' => $qty,
+                'total_mtr' => $sizeMtr !== null ? round($sizeMtr * $qty, 2) : null,
+                'price_per_mtr' => $rate,
+                'amount' => round($qty * $rate, 2),
             ]);
         }
     }
@@ -454,13 +482,46 @@ class QuotationController extends Controller
             'shipping_city' => ['required', 'string', 'max:100'],
             'shipping_pincode' => ['required', 'digits:6'],
             'items' => ['required', 'array', 'min:1'],
-            'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.despatch_to' => ['nullable', 'string', 'max:255'],
-            'items.*.size_mtr' => ['required', 'numeric', 'min:0.01'],
-            'items.*.no_of_rolls' => ['required', 'integer', 'min:1'],
-            'items.*.price_per_mtr' => ['required', 'numeric', 'min:0'],
+            'items.*.item' => ['required', 'string', $this->itemRule($quotation)],
+            'items.*.description' => ['nullable', 'string', 'max:1000'],
+            'items.*.qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'items.*.rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
+            'items.*.size_mtr' => ['nullable', 'numeric', 'min:0', 'max:99999999.99'],
         ]);
     }
+
+    /**
+     * The chosen item must be a real, ACTIVE product or material - or one that
+     * is already on this quotation (so an old, since-deactivated line can stay).
+     */
+    private function itemRule(?Quotation $quotation): \Closure
+    {
+        return function (string $attribute, mixed $value, \Closure $fail) use ($quotation) {
+            $parsed = QuotationItem::parseKey($value);
+
+            if ($parsed === null) {
+                $fail('Select a product or material.');
+
+                return;
+            }
+
+            [$type, $id] = $parsed;
+            $model = $type === QuotationItem::TYPE_PRODUCT ? Product::find($id) : Material::find($id);
+
+            if (! $model) {
+                $fail('The selected ' . $type . ' no longer exists.');
+
+                return;
+            }
+
+            $alreadyOnQuotation = $quotation && $quotation->items()->where($type . '_id', $id)->exists();
+
+            if ($model->status !== 'active' && ! $alreadyOnQuotation) {
+                $fail('"' . $model->name . '" is inactive and cannot be added to a quotation.');
+            }
+        };
+    }
+
     private function shippingData(array $data): array
     {
         return [

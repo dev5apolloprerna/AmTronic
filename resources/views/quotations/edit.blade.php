@@ -31,13 +31,13 @@
                 @include('quotations._shipping', ['quotation' => $quotation ?? null])
                 <div class="card" style="box-shadow:none; border:1px solid var(--color-border); margin-top:10px;">
                     <div class="card-header">
-                        <h3>Products</h3>
-                        <button type="button" id="addItemBtn" class="btn btn-secondary btn-sm">+ Add Product Line</button>
+                        <h3>Items</h3>
+                        <button type="button" id="addItemBtn" class="btn btn-secondary btn-sm">+ Add Item</button>
                     </div>
                     <div class="card-body">
                         <div id="itemsContainer" data-next-index="{{ $quotation->items->count() }}">
                             @foreach($quotation->items as $i => $item)
-                                @include('quotations._item_row', ['index' => $i, 'products' => $products, 'item' => $item])
+                                @include('quotations._item_row', ['index' => $i, 'products' => $products, 'materials' => $materials, 'item' => $item])
                             @endforeach
                         </div>
 
@@ -86,6 +86,6 @@
     </div>
 
     <template id="itemRowTemplate">
-        @include('quotations._item_row', ['index' => '__INDEX__', 'products' => $products, 'item' => null])
+        @include('quotations._item_row', ['index' => '__INDEX__', 'products' => $products, 'materials' => $materials, 'item' => null])
     </template>
 @endsection

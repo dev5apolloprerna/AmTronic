@@ -175,7 +175,7 @@
                 <th>Sr No.</th>
                 <th style="text-align:left;padding-left:2.5mm;">Description of Goods</th>
                 <th>HSN</th>
-                <th>No. of <br>Rolls</th>
+                <th>Qty</th>
                 <th>Rate</th>
                 <th>Total Amount</th>
             </tr>
@@ -185,13 +185,13 @@
                 <tr>
                     <td class="text-center">{{ $i + 1 }}</td>
                     <td>
-                        <strong>{{ $item->product->name }} - Size: {{ number_format($item->size_mtr, 2) }} Mtr </strong>
-                        @if($item->product->description)<small>{{ $item->product->description }}</small>@endif
+                        <strong>{{ $item->item_name }}@if($item->legacy_size_label) - {{ $item->legacy_size_label }}@endif </strong>
+                        @if($item->line_description)<small>{{ $item->line_description }}</small>@endif
 
                     </td>
-                    <td class="text-right">{{ $item->product->hsn_code }}</td>
-                    <td class="text-right">{{ $item->no_of_rolls }}</td>
-                    <td class="text-right">{{ number_format($item->price_per_mtr, 2) }}</td>
+                    <td class="text-right">{{ $item->item_hsn }}</td>
+                    <td class="text-right">{{ $item->qty_with_unit }}</td>
+                    <td class="text-right">{{ number_format($item->rate, 2) }}</td>
                     <td class="text-right">{{ number_format($item->amount, 2) }}</td>
                 </tr>
             @endforeach
@@ -250,7 +250,7 @@
             {{-- Total --}}
             <tr class="total-row">
                 <td colspan="3" class="text-right">Total</td>
-                <td class="text-right">{{ $invoice->quotation->items->sum('no_of_rolls') }}</td>
+                <td class="text-right">{{ $invoice->quotation->totalQtyLabel() }}</td>
                 <td></td>
                 <td class="text-right">Net Amount : {{ number_format($invoice->total_amount, 2) }}</td>
             </tr>

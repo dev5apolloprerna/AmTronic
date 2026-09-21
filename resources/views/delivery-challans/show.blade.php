@@ -17,17 +17,15 @@
 					<tr>
 						<th>Product / Description</th>
 						<th>HSN</th>
-						<th>Size</th>
-						<th>Rolls</th>
-						<th>Total Mtr</th>
+						<th>Qty</th>
+						<th>Unit</th>
 					</tr>
 				</thead>
 				<tbody>@foreach($deliveryChallan->invoice->quotation->items as $item)<tr>
-						<td>{{ $item->product->name }}<br><small>{{ $item->product->description }}</small></td>
-						<td>{{ $item->product->hsn_code }}</td>
-						<td>{{ $item->size_mtr }}</td>
-						<td>{{ $item->no_of_rolls }}</td>
-						<td>{{ $item->total_mtr }}</td>
+						<td>{{ $item->item_name }}@if($item->legacy_size_label) - {{ $item->legacy_size_label }}@endif<br><small>{{ $item->line_description }}</small></td>
+						<td>{{ $item->item_hsn }}</td>
+						<td>{{ $item->qty_label }}</td>
+						<td>{{ $item->item_unit }}</td>
 					</tr>@endforeach</tbody>
 			</table>
 		</div>

@@ -18,7 +18,16 @@
     <label class="checkbox-row">
         <input type="hidden" name="can_login" value="0">
         <input type="checkbox" name="can_login" value="1" {{ old('can_login', $d->can_login ?? false) ? 'checked' : '' }}>
-        Employees with this designation can log in (e.g. Sales)
+        Employees with this designation can log in
     </label>
-    <div class="form-hint">Only these employees, and Super Admins, can log in to the app. Un-ticking this stops existing employees with this designation from logging in.</div>
+  <div class="form-hint">Un-ticking this stops existing employees with this designation from logging in.</div>
+</div>
+
+<div class="form-group">
+    <label class="checkbox-row">
+        <input type="hidden" name="api_only" value="0">
+        <input type="checkbox" name="api_only" value="1" {{ old('api_only', $d->api_only ?? false) ? 'checked' : '' }}>
+        API login only (for Sales Executives)
+    </label>
+    <div class="form-hint">API-only employees cannot use the admin website. They can use the mobile/API quotation workflow.</div>
 </div>

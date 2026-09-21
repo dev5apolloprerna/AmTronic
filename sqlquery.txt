@@ -154,10 +154,43 @@ WHERE `id` IN (SELECT DISTINCT `designation_id` FROM `users` WHERE `role` = 'use
 
 -- Employees whose designation cannot log in need no email or password
 -- (the unique index on email is kept; MySQL allows many NULLs in a unique column)
-ALTER TABLE `users` MODIFY `email` varchar(255) NULL, MODIFY `password` varchar(255) NULL;
+-- Length is 191, NOT 255: the app sets Schema::defaultStringLength(191), so that is what these
+-- columns are. 255 would fail on servers with the 767-byte index limit (ERROR 1709/1071).
+ALTER TABLE `users` MODIFY `email` varchar(191) NULL, MODIFY `password` varchar(191) NULL;
 
 -- OPTIONAL: only if this server ALSO uses `php artisan migrate`, record these so it won't re-run them.
 -- SET @b = (SELECT COALESCE(MAX(`batch`),0) + 1 FROM `migrations`);
 -- INSERT INTO `migrations` (`migration`, `batch`) VALUES
 --   ('2026_09_21_000006_add_can_login_to_designations_table', @b),
 --   ('2026_09_21_000007_make_user_credentials_nullable', @b);
+
+
+-- =====================================================================
+-- Quotation items (2026-09-21): a line is a Product OR a Material, with a
+-- description and a decimal quantity. Same as running migration
+-- 2026_09_21_000009_quotation_items_product_or_material.
+-- Run AFTER the "Masters update" block (it needs the `materials` table).
+-- Use EITHER this file OR `php artisan migrate`, not both.
+-- (Migration 2026_09_21_000008 only adds quotations/invoices columns that the live
+--  database already has by hand, so there is no SQL for it.)
+-- =====================================================================
+
+-- A line is now a Product OR a Material: product_id may be empty; material_id is new.
+ALTER TABLE `quotation_items` MODIFY `product_id` bigint unsigned NULL;
+ALTER TABLE `quotation_items` ADD `material_id` bigint unsigned NULL AFTER `product_id`;
+ALTER TABLE `quotation_items` ADD `description` text NULL AFTER `material_id`;
+ALTER TABLE `quotation_items` ADD CONSTRAINT `quotation_items_material_id_foreign`
+  FOREIGN KEY (`material_id`) REFERENCES `materials` (`id`) ON DELETE RESTRICT;
+
+-- Quantity may be fractional (12.5 Mtr). `no_of_rolls` now holds the QUANTITY and
+-- `price_per_mtr` the RATE - the old column names are kept on purpose.
+ALTER TABLE `quotation_items` MODIFY `no_of_rolls` decimal(12,2) NOT NULL;
+
+-- Roll size / total metres are no longer entered. Old rows keep their values.
+ALTER TABLE `quotation_items` MODIFY `size_mtr` decimal(10,2) NULL, MODIFY `total_mtr` decimal(12,2) NULL;
+
+-- OPTIONAL: only if this server ALSO uses `php artisan migrate`, record these so it won't re-run them.
+-- SET @b = (SELECT COALESCE(MAX(`batch`),0) + 1 FROM `migrations`);
+-- INSERT INTO `migrations` (`migration`, `batch`) VALUES
+--   ('2026_09_21_000008_add_missing_charge_and_reference_columns', @b),
+--   ('2026_09_21_000009_quotation_items_product_or_material', @b);

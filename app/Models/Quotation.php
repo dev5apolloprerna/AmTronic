@@ -75,6 +75,32 @@ class Quotation extends Model
         return $this->hasOne(Invoice::class);
     }
 
+    public function totalQty(): float
+    {
+        return (float) $this->items->sum(fn (QuotationItem $item) => $item->qty);
+    }
+
+    /**
+     * The unit shared by every line (e.g. "Nos"), or null when lines use
+     * different units - adding 5 Nos to 12 Mtr would be meaningless.
+     */
+    public function commonUnit(): ?string
+    {
+        $units = $this->items->map(fn (QuotationItem $item) => $item->item_unit)->unique()->values();
+
+        return $units->count() === 1 && $units->first() !== '' ? $units->first() : null;
+    }
+
+    /** "17" / "17.5" - for the "Total Qty" row; null when there is no single unit to total in. */
+    public function totalQtyLabel(): ?string
+    {
+        if ($this->commonUnit() === null) {
+            return null;
+        }
+
+        return rtrim(rtrim(number_format($this->totalQty(), 2, '.', ''), '0'), '.') . ' ' . $this->commonUnit();
+    }
+
     public function isEditable(): bool
     {
         return $this->status === 'draft' && $this->document_status !== 'quotation_sent';

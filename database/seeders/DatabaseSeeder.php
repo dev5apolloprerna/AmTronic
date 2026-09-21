@@ -31,6 +31,10 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Sales'],
             ['status' => 'active', 'can_login' => true]
         );
+        Designation::updateOrCreate(
+            ['name' => 'Sales Executive'],
+            ['status' => 'active', 'can_login' => true, 'api_only' => true]
+        );
 
         // Sample regular user
         User::firstOrCreate(

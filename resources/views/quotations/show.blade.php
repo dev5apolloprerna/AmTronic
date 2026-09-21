@@ -113,29 +113,27 @@
     </div>
 
     <div class="card">
-        <div class="card-header"><h3>Products</h3></div>
+        <div class="card-header"><h3>Items</h3></div>
         <div class="card-body table-wrap">
             <table class="table">
                  <thead>
                     <tr>
-                        <th>Product</th>
-                        <!-- <th>Despatch To</th> -->
-                        <th class="text-right">Size (Mtr)</th>
-                        <th class="text-right"># Rolls</th>
-                        <th class="text-right">Total Mtr</th>
-                        <th class="text-right">Price/Mtr</th>
+                        <th>Item</th>
+                        <th class="text-right">Qty</th>
+                        <th class="text-right">Rate</th>
                         <th class="text-right">Amount</th>
                     </tr>
                 </thead>
                 <tbody>
                      @foreach($quotation->items as $item)
                         <tr>
-
-                            <td>{{ $item->product->name }}<br><small>HSN: {{ $item->product->hsn_code }} · {{ $item->product->description }}</small></td>
-                            <td class="text-right">{{ number_format($item->size_mtr, 2) }}</td>
-                            <td class="text-right">{{ $item->no_of_rolls }}</td>
-                            <td class="text-right">{{ number_format($item->total_mtr, 2) }}</td>
-                            <td class="text-right">&#8377;{{ number_format($item->price_per_mtr, 2) }}</td>
+                            <td>
+                                {{ $item->item_name }}
+                                @if($item->legacy_size_label) - {{ $item->legacy_size_label }}@endif
+                                <br><small>HSN: {{ $item->item_hsn ?: '-' }}@if($item->line_description) · {{ $item->line_description }}@endif</small>
+                            </td>
+                            <td class="text-right">{{ $item->qty_with_unit }}</td>
+                            <td class="text-right">&#8377;{{ number_format($item->rate, 2) }}</td>
                             <td class="text-right">&#8377;{{ number_format($item->amount, 2) }}</td>
                         </tr>
                     @endforeach

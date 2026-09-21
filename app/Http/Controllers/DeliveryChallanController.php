@@ -20,13 +20,13 @@ class DeliveryChallanController extends Controller
     public function show(DeliveryChallan $deliveryChallan)
     {
         $this->authorizeInvoice($deliveryChallan->invoice);
-        $deliveryChallan->load('invoice.customer', 'invoice.quotation.items.product');
+        $deliveryChallan->load('invoice.customer', 'invoice.quotation.items.product', 'invoice.quotation.items.material');
         return view('delivery-challans.show', compact('deliveryChallan'));
     }
     public function download(DeliveryChallan $deliveryChallan)
     {
         $this->authorizeInvoice($deliveryChallan->invoice);
-        $deliveryChallan->load('invoice.customer', 'invoice.quotation.items.product');
+        $deliveryChallan->load('invoice.customer', 'invoice.quotation.items.product', 'invoice.quotation.items.material');
         return Pdf::loadView('delivery-challans.pdf', compact('deliveryChallan'))->setPaper('a4')->stream($deliveryChallan->challan_number . '.pdf');
     }
     private function authorizeInvoice(Invoice $invoice): void

@@ -17,11 +17,13 @@ class User extends Authenticatable
         'role',
         'status',
         'designation_id',
+        'api_token',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
+        'api_token',
     ];
 
     protected function casts(): array
@@ -55,7 +57,14 @@ class User extends Authenticatable
             return true;
         }
 
-        return (bool) $this->designation?->can_login;
+        return (bool) $this->designation?->can_login && ! $this->designation?->api_only;
+    }
+
+    public function canApiLogin(): bool
+    {
+        return $this->status === 'active'
+            && ! $this->isSuperAdmin()
+            && (bool) $this->designation?->can_login;
     }
 
     public function quotations()

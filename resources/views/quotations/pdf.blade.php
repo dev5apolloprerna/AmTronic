@@ -150,7 +150,7 @@
                     <th>Sr.</th>
                     <th>Description of Goods</th>
                     <th>HSN Code</th>
-                    <th>Quantity (Rolls)</th>
+                    <th>Quantity</th>
                     <th>Rate </th>
                     <th>Amount</th>
                 </tr>
@@ -158,21 +158,24 @@
             <tbody>
                 @foreach($quotation->items as $i => $item)<tr>
                     <td class="center">{{ $i + 1 }}</td>
-                    <td>{{ $item->product->name }} -  Size : {{ number_format($item->size_mtr, 2) }} Mtr<br><small>{{ $item->product->description }}</small></td>
-                    <td class="center">{{ $item->product->hsn_code }}</td>
-                    <td class="center">{{ $item->no_of_rolls }}</td>
-                    <td class="right">{{ number_format($item->price_per_mtr, 2) }}</td>
+                    <td>{{ $item->item_name }}@if($item->legacy_size_label) - {{ $item->legacy_size_label }}@endif @if($item->line_description)<br><small>{{ $item->line_description }}</small>@endif</td>
+                    <td class="center">{{ $item->item_hsn }}</td>
+                    <td class="center">{{ $item->qty_with_unit }}</td>
+                    <td class="right">{{ number_format($item->rate, 2) }}</td>
                     <td class="right">{{ number_format($item->amount, 2) }}</td>
                 </tr>@endforeach
                
             </tbody>
+            {{-- A total only makes sense when every line is counted in the same unit. --}}
+            @if($quotation->totalQtyLabel())
             <tfoot>
                 <tr class="rolls-total-row">
-                    <td colspan="3" class="right total-rolls-label">Total Rolls</td>
-                    <td class="center total-rolls-value">{{ $quotation->items->sum('no_of_rolls') }}</td>
+                    <td colspan="3" class="right total-rolls-label">Total Qty</td>
+                    <td class="center total-rolls-value">{{ $quotation->totalQtyLabel() }}</td>
                     <td colspan="2"></td>
                 </tr>
             </tfoot>
+            @endif
 
         </table><br>
     <div class="bottom-layout">

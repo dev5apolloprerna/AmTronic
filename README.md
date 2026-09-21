@@ -1,7 +1,7 @@
 # Vendor / Customer Quotation & Invoice Manager
 
 A Laravel + MySQL web application to manage customers (with ledger/due tracking), a product master,
-role-based users, quotations (with multi-product line items and GST), invoice generation on approval,
+role-based users, quotations (line items of products or materials, with GST), invoice generation on approval,
 and reporting (customer ledger history + sales report).
 
 ## Tech Stack
@@ -48,12 +48,24 @@ and reporting (customer ledger history + sales report).
   renamed, deactivated or deleted.
 
 ### Quotations
-- A quotation belongs to one Customer and has many line items (products).
-- Each line item captures: Product, Size (Mtr) per roll, Number of Rolls, Price per Mtr.
-  `Total Mtr = Size x Rolls`, `Amount = Total Mtr x Price`.
-- **Auto last-price fill**: when a Customer + Product are selected, an AJAX call
-  (`GET /ajax/last-price?customer_id=&product_id=`) looks up the price used in that customer's most
-  recent *approved* quotation for the same product and pre-fills it (user can still override it).
+- A quotation belongs to one Customer and has many line items.
+- Each line item is: **Product / Material** (one dropdown, grouped, fed by the Product Master and the
+  Material Master - active ones only), **Description** (free text, pre-filled from the master's description
+  but never overwritten once the user has typed their own), **Qty** (decimals allowed, e.g. 12.5 Mtr),
+  **Rate**, and `Amount = Qty x Rate`.
+- The form submits the chosen item as one value, `product:<id>` or `material:<id>`, which is stored in
+  `quotation_items.product_id` / `material_id` (exactly one is set).
+- **Auto last-rate fill**: when a Customer + item are selected, an AJAX call
+  (`GET /ajax/last-price?customer_id=&item=product:5`) looks up the rate used in that customer's most
+  recent *approved* quotation for the same product or material and pre-fills it (user can still override it).
+- **State**: the Shipping Address block has a State dropdown fed by the State Master. It is filled from the
+  customer's state (unless "Different from customer address" is ticked) and decides the GST split:
+  Gujarat = CGST + SGST, any other state = IGST.
+- **Documents**: the quotation, invoice and delivery challan PDFs (and their on-screen pages) show each line's
+  name, HSN, description, quantity with unit, rate and amount. The "Total Qty" row is shown only when every
+  line uses the same unit.
+- Quotations made before this change (roll size x rolls x price per roll) keep displaying as before: their
+  size is shown next to the name and their quantity is labelled "Rolls".
 - GST toggle: if enabled, a flat 18% is added to the subtotal.
 - Quotations are editable while `status = draft`. Once **Approved**:
   - They become read-only (locked).
@@ -123,13 +135,23 @@ and reporting (customer ledger history + sales report).
 - `public/css/app.css` — all application styling (no inline CSS anywhere in the Blade views).
 - `public/css/invoice-pdf.css` — styling used only for the generated invoice PDF.
 - `public/js/app.js` — sidebar toggle, delete-confirmation, and the dynamic quotation item builder
-  (add/remove product lines, live totals, GST calculation, and the last-price AJAX lookup).
+  (add/remove item lines, description pre-fill, live totals, GST calculation, and the last-rate AJAX lookup).
 - No Vite/Node build step is required — assets are plain static files served directly.
 
 ## Database Schema Summary
 See migrations in `database/migrations/` for the authoritative schema:
 `users`, `customers`, `customer_ledgers`, `products`, `number_settings`, `quotations`,
 `quotation_items`, `invoices`.
+
+**`quotation_items` storage names.** The quantity is stored in `no_of_rolls` and the rate in `price_per_mtr`
+(their original names, from when lines were priced per roll); `size_mtr` / `total_mtr` / `despatch_to` are only
+filled on lines made before the item change. In code always use `$item->qty` / `$item->rate` (see
+`App\Models\QuotationItem`) rather than the column names. They can be renamed later in a dedicated migration.
+
+**Migration `2026_09_21_000008`** adds five columns the app already used but no migration created
+(`quotations.admin_charges`, `quotations.material_handling_charges`, `invoices.other_reference`,
+`invoices.admin_charges`, `invoices.material_handling_charges`). Each is guarded with `hasColumn()`, so on a
+database that already has them it does nothing; on a fresh install it is what makes saving a quotation work.
 # glass-grip
 # AmTronic
 # AmTronic
