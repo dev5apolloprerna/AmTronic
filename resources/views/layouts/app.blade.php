@@ -27,12 +27,16 @@
                     <a href="{{ route('attendance.index') }}" class="{{ request()->routeIs('attendance.*') ? 'active' : '' }}">Daily Attendance</a>
                     <a href="{{ route('designations.index') }}" class="{{ request()->routeIs('designations.*') ? 'active' : '' }}">Designations</a>
                     <a href="{{ route('states.index') }}" class="{{ request()->routeIs('states.*') ? 'active' : '' }}">States</a>
+                    <a href="{{ route('vendors.index') }}" class="{{ request()->routeIs('vendors.*') ? 'active' : '' }}">Vendors</a>
                     <a href="{{ route('number-settings.index') }}" class="{{ request()->routeIs('number-settings.*') ? 'active' : '' }}">Number Settings</a>
 
                     <div class="sidebar-section">Reports</div>
                     <a href="{{ route('reports.customer-ledger') }}" class="{{ request()->routeIs('reports.customer-ledger') ? 'active' : '' }}">Customer Ledger</a>
                     <a href="{{ route('pending-amounts.index') }}" class="{{ request()->routeIs('pending-amounts.*') ? 'active' : '' }}">Pending Amounts</a>
                     <a href="{{ route('reports.sales') }}" class="{{ request()->routeIs('reports.sales') ? 'active' : '' }}">Sales Report</a>
+
+                    <a href="{{ route('reports.employee-attendance') }}" class="{{ request()->routeIs('reports.employee-attendance') ? 'active' : '' }}">Emp Attendance Report</a>
+                    <a href="{{ route('reports.employee-attendance-history') }}" class="{{ request()->routeIs('reports.employee-attendance-history') ? 'active' : '' }}">Emp Attendance History</a>
 
                 @endif
             </nav>

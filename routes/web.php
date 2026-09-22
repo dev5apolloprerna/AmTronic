@@ -15,6 +15,7 @@ use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VendorController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -76,7 +77,8 @@ Route::middleware('guest')->group(function () {
         Route::resource('materials', MaterialController::class)->except(['show']);
         Route::resource('designations', DesignationController::class)->except(['show']);
         Route::resource('states', StateController::class)->except(['show']);
-        
+        Route::resource('vendors', VendorController::class)->except(['show']);
+
         Route::get('attendance', [EmployeeAttendanceController::class, 'index'])->name('attendance.index');
         Route::post('attendance', [EmployeeAttendanceController::class, 'store'])->name('attendance.store');
 
@@ -87,6 +89,9 @@ Route::middleware('guest')->group(function () {
         Route::get('reports/customer-ledger', [ReportController::class, 'customerLedger'])->name('reports.customer-ledger');
         Route::get('reports/sales', [ReportController::class, 'sales'])->name('reports.sales');
         Route::get('reports/customer-ledger/export/excel', [ReportController::class, 'customerLedgerExcel'])->name('reports.customer-ledger.excel');
+        Route::get('reports/employee-attendance', [ReportController::class, 'employeeAttendance'])->name('reports.employee-attendance');
+        Route::get('reports/employee-attendance-history', [ReportController::class, 'employeeAttendanceHistory'])->name('reports.employee-attendance-history');
+
         Route::get('reports/customer-ledger/export/pdf', [ReportController::class, 'customerLedgerPdf'])->name('reports.customer-ledger.pdf');
         Route::get('reports/sales/export/excel', [ReportController::class, 'salesExcel'])->name('reports.sales.excel');
         Route::get('reports/sales/export/pdf', [ReportController::class, 'salesPdf'])->name('reports.sales.pdf');

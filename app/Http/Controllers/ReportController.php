@@ -3,8 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\EmployeeAttendance;
 use App\Models\Invoice;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class ReportController extends Controller
@@ -12,6 +15,60 @@ class ReportController extends Controller
     /**
      * Customer (vendor) ledger history report - filter by customer + date range.
      */
+     public function employeeAttendance(Request $request)
+    {
+        $filters = $request->validate([
+            'from_date' => ['nullable', 'date'],
+            'to_date' => ['nullable', 'date', 'after_or_equal:from_date'],
+        ]);
+        $fromDate = $filters['from_date'] ?? null;
+        $toDate = $filters['to_date'] ?? null;
+
+        $employees = User::where('role', 'user')
+            ->withCount([
+                'attendances as absent_count' => fn ($query) => $this->attendanceRange($query, $fromDate, $toDate)->where('status', 'absent'),
+                'attendances as present_count' => fn ($query) => $this->attendanceRange($query, $fromDate, $toDate)->where('status', 'present'),
+                'attendances as half_day_count' => fn ($query) => $this->attendanceRange($query, $fromDate, $toDate)->where('status', 'half_day'),
+            ])
+            ->orderBy('name')
+            ->get();
+
+        return view('reports.employee-attendance', compact('employees', 'fromDate', 'toDate'));
+    }
+
+    public function employeeAttendanceHistory(Request $request)
+    {
+        $filters = $request->validate([
+            'from_date' => ['nullable', 'date'],
+            'to_date' => ['nullable', 'date', 'after_or_equal:from_date'],
+            'employee_id' => ['nullable', 'integer', Rule::exists('users', 'id')->where('role', 'user')],
+        ]);
+        $fromDate = $filters['from_date'] ?? null;
+        $toDate = $filters['to_date'] ?? null;
+        $employeeId = $filters['employee_id'] ?? null;
+        $employees = User::where('role', 'user')->orderBy('name')->get();
+
+        $history = EmployeeAttendance::with('employee')
+            ->when($fromDate, fn ($query) => $query->whereDate('attendance_date', '>=', $fromDate))
+            ->when($toDate, fn ($query) => $query->whereDate('attendance_date', '<=', $toDate))
+            ->when($employeeId, fn ($query) => $query->where('employee_id', $employeeId))
+            ->orderByDesc('attendance_date')
+            ->orderBy('employee_id')
+            ->paginate(50)
+            ->withQueryString();
+
+        return view('reports.employee-attendance-history', compact(
+            'history', 'employees', 'fromDate', 'toDate', 'employeeId'
+        ));
+    }
+
+    private function attendanceRange($query, ?string $fromDate, ?string $toDate)
+    {
+        return $query
+            ->when($fromDate, fn ($query) => $query->whereDate('attendance_date', '>=', $fromDate))
+            ->when($toDate, fn ($query) => $query->whereDate('attendance_date', '<=', $toDate));
+    }
+    
     public function customerLedger(Request $request)
     {
         $customers = Customer::orderBy('name')->get();
