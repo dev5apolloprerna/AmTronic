@@ -85,6 +85,10 @@ Route::middleware('guest')->group(function () {
         Route::get('purchase-orders/{purchaseOrder}/download', [PurchaseOrderController::class, 'download'])->name('purchase-orders.download');
         Route::get('ajax/last-buy-rate', [PurchaseOrderController::class, 'lastRate'])->name('purchase-orders.last-rate');
         Route::resource('employee-advances', EmployeeAdvanceController::class)->except(['show']);
+        Route::post('employee-advances/{employeeAdvance}/returns', [EmployeeAdvanceController::class, 'storeReturn'])->name('employee-advances.returns.store');
+        Route::delete('employee-advances/{employeeAdvance}/returns/{advanceReturn}', [EmployeeAdvanceController::class, 'destroyReturn'])->name('employee-advances.returns.destroy');
+
+
 
         Route::get('attendance', [EmployeeAttendanceController::class, 'index'])->name('attendance.index');
         Route::post('attendance', [EmployeeAttendanceController::class, 'store'])->name('attendance.store');

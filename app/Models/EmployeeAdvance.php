@@ -28,4 +28,18 @@ class EmployeeAdvance extends Model
     {
         return $this->belongsTo(User::class, 'employee_id');
     }
+     public function returns()
+    {
+        return $this->hasMany(EmployeeAdvanceReturn::class)->orderBy('return_date')->orderBy('id');
+    }
+
+    public function getReturnedAmountAttribute(): string
+    {
+        return number_format((float) ($this->returns_sum_amount ?? $this->returns()->sum('amount')), 2, '.', '');
+    }
+
+    public function getBalanceAttribute(): string
+    {
+        return number_format((float) $this->adv_amount - (float) $this->returned_amount, 2, '.', '');
+    }
 }
