@@ -13,7 +13,7 @@
 				<label>Advance Date *</label>
 				<input type="date" class="form-control" name="adv_date" value="{{ old('adv_date',$a?->adv_date?->format('Y-m-d')??date('Y-m-d')) }}" required>
 			</div>
-		</div>
+		<!-- </div>
      <div class="form-row">
 	    <div class="form-group">
 	    	<label>Return Amount</label>
@@ -23,5 +23,5 @@
 	    	<label>Return Date</label>
 	    	<input type="date" class="form-control" name="return_date" value="{{ old('return_date',$a?->return_date?->format('Y-m-d')) }}">
 	    	<small class="text-muted">Required when a return amount is entered.</small>
-	    </div>
+	    </div> -->
 	</div>
