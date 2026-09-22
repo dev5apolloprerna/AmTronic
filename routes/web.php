@@ -6,6 +6,8 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\MaterialController;
+use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\EmployeeAdvanceController;
 use App\Http\Controllers\DeliveryChallanController;
 use App\Http\Controllers\EmployeeAttendanceController;
 use App\Http\Controllers\NumberSettingController;
@@ -78,6 +80,11 @@ Route::middleware('guest')->group(function () {
         Route::resource('designations', DesignationController::class)->except(['show']);
         Route::resource('states', StateController::class)->except(['show']);
         Route::resource('vendors', VendorController::class)->except(['show']);
+        
+        Route::resource('purchase-orders', PurchaseOrderController::class);
+        Route::get('purchase-orders/{purchaseOrder}/download', [PurchaseOrderController::class, 'download'])->name('purchase-orders.download');
+        Route::get('ajax/last-buy-rate', [PurchaseOrderController::class, 'lastRate'])->name('purchase-orders.last-rate');
+        Route::resource('employee-advances', EmployeeAdvanceController::class)->except(['show']);
 
         Route::get('attendance', [EmployeeAttendanceController::class, 'index'])->name('attendance.index');
         Route::post('attendance', [EmployeeAttendanceController::class, 'store'])->name('attendance.store');
