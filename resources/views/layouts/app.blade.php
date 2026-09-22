@@ -16,8 +16,8 @@
                 <a href="{{ route('dashboard') }}" class="{{ request()->routeIs('dashboard') ? 'active' : '' }}">Dashboard</a>
 
                 <div class="sidebar-section">Sales</div>
-                <a href="{{ route('quotations.index') }}" class="{{ request()->routeIs('quotations.*') ? 'active' : '' }}">Quotations / Invoices</a>
-                <a href="{{ route('payment-collections.index') }}" class="{{ request()->routeIs('payment-collections.*') ? 'active' : '' }}">Payment Collection</a>
+                <a href="{{ route('quotations.index') }}" class="{{ request()->routeIs('quotations.*') ? 'active' : '' }}">Quotations</a>
+                <!-- <a href="{{ route('payment-collections.index') }}" class="{{ request()->routeIs('payment-collections.*') ? 'active' : '' }}">Payment Collection</a> -->
                 @if(auth()->user()->isSuperAdmin())
                     <div class="sidebar-section">Masters</div>
                     <a href="{{ route('customers.index') }}" class="{{ request()->routeIs('customers.*') ? 'active' : '' }}">Company</a>
@@ -28,11 +28,13 @@
                     <a href="{{ route('designations.index') }}" class="{{ request()->routeIs('designations.*') ? 'active' : '' }}">Designations</a>
                     <a href="{{ route('states.index') }}" class="{{ request()->routeIs('states.*') ? 'active' : '' }}">States</a>
                     <a href="{{ route('vendors.index') }}" class="{{ request()->routeIs('vendors.*') ? 'active' : '' }}">Vendors</a>
+                    <a href="{{ route('purchase-orders.index') }}" class="{{ request()->routeIs('purchase-orders.*') ? 'active' : '' }}">Purchase Orders</a>
+                    <a href="{{ route('employee-advances.index') }}" class="{{ request()->routeIs('employee-advances.*') ? 'active' : '' }}">Employee Advances</a>
                     <a href="{{ route('number-settings.index') }}" class="{{ request()->routeIs('number-settings.*') ? 'active' : '' }}">Number Settings</a>
 
                     <div class="sidebar-section">Reports</div>
                     <a href="{{ route('reports.customer-ledger') }}" class="{{ request()->routeIs('reports.customer-ledger') ? 'active' : '' }}">Customer Ledger</a>
-                    <a href="{{ route('pending-amounts.index') }}" class="{{ request()->routeIs('pending-amounts.*') ? 'active' : '' }}">Pending Amounts</a>
+<!--                     <a href="{{ route('pending-amounts.index') }}" class="{{ request()->routeIs('pending-amounts.*') ? 'active' : '' }}">Pending Amounts</a> -->
                     <a href="{{ route('reports.sales') }}" class="{{ request()->routeIs('reports.sales') ? 'active' : '' }}">Sales Report</a>
 
                     <a href="{{ route('reports.employee-attendance') }}" class="{{ request()->routeIs('reports.employee-attendance') ? 'active' : '' }}">Emp Attendance Report</a>
