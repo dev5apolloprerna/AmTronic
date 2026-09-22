@@ -122,4 +122,62 @@ class SalesExecutiveApiTest extends TestCase
             ->assertRedirect(route('quotations.show', $quotation))
             ->assertSessionHas('error', 'Approved quotations cannot be edited.');
     }
+    public function test_employee_can_persist_update_and_delete_products_individually(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+        $payload = $this->quotationPayload();
+        $quotationId = $this->withToken($token)->postJson('/api/quotations', $payload)->json('data.id');
+        $productId = $payload['items'][0]['product_id'];
+
+        $added = $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items", [
+            'product_id' => $productId,
+            'despatch_to' => 'Warehouse',
+            'size_mtr' => 5,
+            'no_of_rolls' => 3,
+            'price_per_mtr' => 100,
+        ])->assertCreated()
+            ->assertJsonPath('data.quotation.sub_total', '400.00')
+            ->assertJsonPath('data.total_amount', 472);
+        $itemId = $added->json('item_id');
+
+        // A fresh request (such as reopening the app) returns the persisted line.
+        $this->withToken($token)->getJson("/api/quotations/{$quotationId}")
+            ->assertOk()
+            ->assertJsonPath('data.quotation.items.1.id', $itemId)
+            ->assertJsonPath('data.quotation.items.1.amount', '300.00');
+
+        $this->withToken($token)->patchJson("/api/quotations/{$quotationId}/items/{$itemId}", [
+            'product_id' => $productId,
+            'size_mtr' => 5,
+            'no_of_rolls' => 4,
+            'price_per_mtr' => 100,
+        ])->assertOk()
+            ->assertJsonPath('data.quotation.sub_total', '500.00')
+            ->assertJsonPath('data.total_amount', 590);
+
+        $this->withToken($token)->deleteJson("/api/quotations/{$quotationId}/items/{$itemId}")
+            ->assertOk()
+            ->assertJsonCount(1, 'data.quotation.items')
+            ->assertJsonPath('data.quotation.sub_total', '100.00')
+            ->assertJsonPath('data.total_amount', 118);
+    }
+
+    public function test_employee_cannot_change_another_quotation_item_or_items_on_sent_quotation(): void
+    {
+        $owner = $this->salesExecutive();
+        $ownerToken = $this->token($owner);
+        $payload = $this->quotationPayload();
+        $created = $this->withToken($ownerToken)->postJson('/api/quotations', $payload);
+        $quotationId = $created->json('data.id');
+        $itemId = $created->json('data.quotation.items.0.id');
+
+        $otherToken = $this->token($this->salesExecutive());
+        $this->withToken($otherToken)->deleteJson("/api/quotations/{$quotationId}/items/{$itemId}")
+            ->assertForbidden();
+
+        $this->withToken($ownerToken)->postJson("/api/quotations/{$quotationId}/mark-sent")->assertOk();
+        $this->withToken($ownerToken)->deleteJson("/api/quotations/{$quotationId}/items/{$itemId}")
+            ->assertStatus(409);
+    }
 }

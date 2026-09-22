@@ -41,6 +41,9 @@ login. A user can access only quotations created by that same user.
 | `GET` | `/api/quotations/{quotation}` | Get one quotation. |
 | `PUT/PATCH` | `/api/quotations/{quotation}` | Update an editable quotation. |
 | `DELETE` | `/api/quotations/{quotation}` | Delete an editable quotation. |
+| `POST` | `/api/quotations/{quotation}/items` | Immediately save a new product line. |
+| `PUT/PATCH` | `/api/quotations/{quotation}/items/{item}` | Save changes to one product line. |
+| `DELETE` | `/api/quotations/{quotation}/items/{item}` | Delete one product line. |
 | `POST` | `/api/quotations/{quotation}/mark-sent` | Mark a new quotation as sent. |
 | `POST` | `/api/quotations/{quotation}/approve` | Approve a sent quotation. |
 | `POST` | `/api/quotations/{quotation}/reject` | Reject a new quotation. |
@@ -390,6 +393,140 @@ Successful response (`200 OK`):
 The actual `data` contains the complete summary and nested quotation described
 under **Create quotation**. Sent, approved, or rejected quotations cannot be
 updated and return `409 Conflict`.
+
+### Incremental product save (mobile draft)
+
+Use these endpoints when an employee taps **Add New Product**, edits a product,
+or deletes a product. Each request is written to the database immediately and
+returns the complete refreshed quotation, including recalculated `sub_total`,
+GST, round-off, and `total_amount`. The employee does not have to tap the final
+quotation submit/save button first. If the app is closed, call
+`GET /api/quotations/{quotation}` when it reopens to restore all saved products.
+
+#### Add a product
+
+```text
+POST /api/quotations/25/items
+```
+
+Request:
+
+```json
+{
+  "product_id": 3,
+  "despatch_to": "Customer warehouse",
+  "size_mtr": 10,
+  "no_of_rolls": 2,
+  "price_per_mtr": 500
+}
+```
+
+Successful response (`201 Created`):
+
+```json
+{
+  "message": "Quotation product added successfully.",
+  "item_id": 42,
+  "data": {
+    "id": 25,
+    "total_amount": 2360,
+    "editable": true,
+    "quotation": {
+      "sub_total": "2000.00",
+      "gst_amount": "360.00",
+      "total_amount": "2360.00",
+      "items": [
+        { "id": 41, "product_id": 3, "amount": "1000.00" },
+        { "id": 42, "product_id": 3, "amount": "1000.00" }
+      ]
+    }
+  }
+}
+```
+
+`item_id` is the ID to use for a later update or delete. Only active products
+are accepted. `size_mtr` must be at least `0.01`, `no_of_rolls` must be a whole
+number of at least `1`, and `price_per_mtr` cannot be negative.
+
+#### Update/save one product
+
+```text
+PATCH /api/quotations/25/items/42
+```
+
+Request: send the same five product fields shown in **Add a product**. `PUT` is
+also supported. The successful `200 OK` response is:
+
+```json
+{
+  "message": "Quotation product updated successfully.",
+  "item_id": 42,
+  "data": {
+    "id": 25,
+    "total_amount": 2950,
+    "editable": true,
+    "quotation": {
+      "sub_total": "2500.00",
+      "gst_amount": "450.00",
+      "total_amount": "2950.00",
+      "items": []
+    }
+  }
+}
+```
+
+The real `items` array contains every saved line and its related product; it is
+shortened above for readability.
+
+#### Delete one product
+
+```text
+DELETE /api/quotations/25/items/42
+```
+
+Request body: none.
+
+Successful response (`200 OK`):
+
+```json
+{
+  "message": "Quotation product deleted successfully.",
+  "data": {
+    "id": 25,
+    "total_amount": 1180,
+    "editable": true,
+    "quotation": {
+      "sub_total": "1000.00",
+      "gst_amount": "180.00",
+      "total_amount": "1180.00",
+      "items": []
+    }
+  }
+}
+```
+
+The complete remaining `items` array is returned. All three incremental
+endpoints return `403` for another employee's quotation and `409 Conflict` once
+the quotation has been sent, approved, or rejected.
+
+#### Recommended mobile API sequence
+
+1. `POST /api/quotations` once to create the editable quotation and keep its
+   returned `data.id` as `quotation_id`.
+2. Each time **Add New Product** is tapped, call
+   `POST /api/quotations/{quotation_id}/items`; keep the returned `item_id`.
+3. To save line changes, call
+   `PATCH /api/quotations/{quotation_id}/items/{item_id}`.
+4. To remove a line, call
+   `DELETE /api/quotations/{quotation_id}/items/{item_id}`.
+5. After every add/update/delete, render amounts from the returned `data`; they
+   already contain the server-calculated totals.
+6. On app restart, call `GET /api/quotations/{quotation_id}` and rebuild the
+   screen from `data.quotation.items`.
+7. When the quotation is ready, call
+   `POST /api/quotations/{quotation_id}/mark-sent`. Product lines become
+   read-only after this step.
+
 
 ### Delete quotation
 

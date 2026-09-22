@@ -9,10 +9,16 @@ Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('api.token')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
-    Route::put('change-password', [AuthController::class, 'changePassword']);
-    Route::get('dashboard', DashboardController::class);
-    Route::get('quotation-lookups', [QuotationController::class, 'lookups']);
+    Route::post('change-password', [AuthController::class, 'changePassword']);
+    Route::post('dashboard', DashboardController::class);
+    Route::post('quotation-lookups', [QuotationController::class, 'lookups']);
     Route::apiResource('quotations', QuotationController::class);
+        
+    Route::post('quotations/{quotation}/items', [QuotationController::class, 'storeItem']);
+    Route::post('quotations/{quotation}/items/{item}', [QuotationController::class, 'updateItem']);
+    Route::post('quotations/{quotation}/items/{item}', [QuotationController::class, 'updateItem']);
+    Route::post('quotations/{quotation}/items/{item}', [QuotationController::class, 'destroyItem']);
+
     Route::post('quotations/{quotation}/mark-sent', [QuotationController::class, 'markSent']);
     Route::post('quotations/{quotation}/approve', [QuotationController::class, 'approve']);
     Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject']);
