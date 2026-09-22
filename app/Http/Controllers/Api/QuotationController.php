@@ -100,6 +100,71 @@ class QuotationController extends Controller
         $quotation->delete();
         return response()->json(['message' => 'Quotation deleted successfully.']);
     }
+    /**
+     * Persist one product as soon as the employee taps "Add New Product".
+     * This intentionally does not wait for the complete quotation update, so
+     * an interrupted mobile session can be restored with show().
+     */
+    public function storeItem(Request $request, Quotation $quotation)
+    {
+        $this->owned($request, $quotation);
+        if (! $quotation->isEditable()) {
+            return $this->itemNotEditableResponse();
+        }
+
+        $data = $this->validatedItem($request);
+        $item = DB::transaction(function () use ($quotation, $data) {
+            $item = $quotation->items()->create($this->itemAttributes($data));
+            $quotation->recalculateTotals();
+
+            return $item;
+        });
+
+        return response()->json([
+            'message' => 'Quotation product added successfully.',
+            'item_id' => $item->id,
+            'data' => $this->detail($quotation),
+        ], 201);
+    }
+
+    public function updateItem(Request $request, Quotation $quotation, QuotationItem $item)
+    {
+        $this->ownedItem($request, $quotation, $item);
+        if (! $quotation->isEditable()) {
+            return $this->itemNotEditableResponse();
+        }
+
+        $data = $this->validatedItem($request);
+        DB::transaction(function () use ($quotation, $item, $data) {
+            $item->update($this->itemAttributes($data));
+            $quotation->recalculateTotals();
+        });
+
+        return response()->json([
+            'message' => 'Quotation product updated successfully.',
+            'item_id' => $item->id,
+            'data' => $this->detail($quotation),
+        ]);
+    }
+
+    public function destroyItem(Request $request, Quotation $quotation, QuotationItem $item)
+    {
+        $this->ownedItem($request, $quotation, $item);
+        if (! $quotation->isEditable()) {
+            return $this->itemNotEditableResponse();
+        }
+
+        DB::transaction(function () use ($quotation, $item) {
+            $item->delete();
+            $quotation->recalculateTotals();
+        });
+
+        return response()->json([
+            'message' => 'Quotation product deleted successfully.',
+            'data' => $this->detail($quotation),
+        ]);
+    }
+
 
     public function markSent(Request $request, Quotation $quotation)
     {
@@ -151,6 +216,35 @@ class QuotationController extends Controller
     {
         abort_unless($quotation->user_id === $request->user()->id, 403, 'You do not have permission to access this quotation.');
     }
+    private function ownedItem(Request $request, Quotation $quotation, QuotationItem $item): void
+    {
+        $this->owned($request, $quotation);
+        abort_unless($item->quotation_id === $quotation->id, 404);
+    }
+
+    private function itemNotEditableResponse()
+    {
+        return response()->json(['message' => 'Products on sent, approved, or rejected quotations cannot be changed.'], 409);
+    }
+
+    private function validatedItem(Request $request): array
+    {
+        return $request->validate([
+            'product_id' => ['required', Rule::exists('products', 'id')->where('status', 'active')],
+            'despatch_to' => ['nullable', 'string', 'max:255'],
+            'size_mtr' => ['required', 'numeric', 'min:0.01'],
+            'no_of_rolls' => ['required', 'integer', 'min:1'],
+            'price_per_mtr' => ['required', 'numeric', 'min:0'],
+        ]);
+    }
+
+    private function itemAttributes(array $item): array
+    {
+        return $item + [
+            'total_mtr' => $item['size_mtr'] * $item['no_of_rolls'],
+            'amount' => $item['no_of_rolls'] * $item['price_per_mtr'],
+        ];
+    }
 
     private function validated(Request $request, ?Quotation $quotation = null): array
     {
@@ -181,9 +275,7 @@ class QuotationController extends Controller
     private function syncItems(Quotation $quotation, array $items): void
     {
         foreach ($items as $item) {
-            QuotationItem::create($item + ['quotation_id' => $quotation->id,
-                'total_mtr' => $item['size_mtr'] * $item['no_of_rolls'],
-                'amount' => $item['no_of_rolls'] * $item['price_per_mtr']]);
+            $quotation->items()->create($this->itemAttributes($item));
         }
     }
 }
