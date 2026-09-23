@@ -13,6 +13,7 @@ class Quotation extends Model
         'quotation_number',
         'customer_id',
         'user_id',
+        'is_temporary',
         'quotation_date',
         'status',
         'gst_applicable',
@@ -34,8 +35,9 @@ class Quotation extends Model
     {
         return [
             'quotation_date' => 'date',
+            'is_temporary' => 'boolean',
             'gst_applicable' => 'boolean',
-                        'shipping_address_different' => 'boolean',
+            'shipping_address_different' => 'boolean',
             'sub_total' => 'decimal:2',
             'gst_amount' => 'decimal:2',
             'cgst_amount' => 'decimal:2', 'sgst_amount' => 'decimal:2', 'igst_amount' => 'decimal:2',

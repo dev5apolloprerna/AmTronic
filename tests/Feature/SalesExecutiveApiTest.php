@@ -231,6 +231,83 @@ class SalesExecutiveApiTest extends TestCase
             ->assertJsonPath('data.quotation.sub_total', '400.00')
             ->assertJsonPath('data.total_amount', 472);
     }
+        public function test_product_can_be_saved_on_a_temporary_quotation_and_finalized_with_the_same_id(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+        $payload = $this->quotationPayload();
+        $productId = $payload['items'][0]['product_id'];
+
+        $saved = $this->withToken($token)->postJson('/api/quotations/items', [
+            'items' => [[
+                'product_id' => $productId,
+                'description' => 'Saved before quotation',
+                'qty' => 2.5,
+                'rate' => 80,
+            ], [
+                'product_id' => $productId,
+                'description' => 'Second saved product',
+                'qty' => 1,
+                'rate' => 20,
+            ]],
+        ])->assertCreated()
+            ->assertJsonPath('data.quotation.items.0.amount', 200)
+            ->assertJsonPath('data.quotation.items.1.amount', 20)
+            ->assertJsonCount(2, 'item_ids')
+            ->assertJsonPath('data.total_amount', 220);
+        $quotationId = $saved->json('quotation_id');
+
+        // A later request, including one after the app is reopened, restores the same quotation.
+        $this->withToken($token)->postJson("/api/quotations/{$quotationId}/show")
+            ->assertOk()
+            ->assertJsonPath('data.quotation.is_temporary', true)
+            ->assertJsonPath('data.quotation.items.0.qty', 2.5)
+            ->assertJsonPath('data.quotation.items.0.rate', 80)
+            ->assertJsonPath('data.quotation.items.0.amount', 200)
+            ->assertJsonPath('data.quotation.items.1.amount', 20);
+
+        unset($payload['items']);
+        $payload['quotation_id'] = $quotationId;
+        $created = $this->withToken($token)->postJson('/api/quotations/create', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.id', $quotationId)
+            ->assertJsonPath('data.quotation.is_temporary', false)
+            ->assertJsonPath('data.quotation.items.0.description', 'Saved before quotation')
+            ->assertJsonPath('data.quotation.items.0.amount', 200);
+
+        $this->assertDatabaseHas('quotation_items', [
+            'quotation_id' => $created->json('data.id'),
+            'product_id' => $productId,
+            'amount' => 200,
+        ]);
+        $this->assertDatabaseHas('quotations', [
+            'id' => $quotationId,
+            'user_id' => $user->id,
+            'is_temporary' => false,
+        ]);
+    }
+
+    public function test_employee_cannot_finalize_another_employees_temporary_quotation(): void
+    {
+        $owner = $this->salesExecutive();
+        $ownerToken = $this->token($owner);
+        $payload = $this->quotationPayload();
+        $quotationId = $this->withToken($ownerToken)->postJson('/api/quotations/items', [
+            'items' => [[
+                'product_id' => $payload['items'][0]['product_id'],
+                'qty' => 1,
+                'rate' => 50,
+            ]],
+        ])->json('quotation_id');
+
+        $otherToken = $this->token($this->salesExecutive());
+        unset($payload['items']);
+        $payload['quotation_id'] = $quotationId;
+        $this->withToken($otherToken)->postJson('/api/quotations/create', $payload)
+            ->assertForbidden();
+    }
+
+
 
     public function test_approved_quotation_cannot_be_edited_in_api_or_admin(): void
     {
@@ -259,14 +336,16 @@ class SalesExecutiveApiTest extends TestCase
         $productId = $payload['items'][0]['product_id'];
 
         $added = $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items", [
-            'product_id' => $productId,
-            'description' => 'Warehouse stock',
-            'qty' => 3,
-            'rate' => 100,
+            'items' => [[
+                'product_id' => $productId,
+                'description' => 'Warehouse stock',
+                'qty' => 3,
+                'rate' => 100,
+            ]],
         ])->assertCreated()
             ->assertJsonPath('data.quotation.sub_total', '400.00')
             ->assertJsonPath('data.total_amount', 472);
-        $itemId = $added->json('item_id');
+        $itemId = $added->json('item_ids.0');
 
         // A fresh request (such as reopening the app) returns the persisted line.
         $this->withToken($token)->postJson("/api/quotations/{$quotationId}/show")

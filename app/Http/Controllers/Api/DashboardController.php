@@ -10,7 +10,7 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request)
     {
-        $query = Quotation::where('user_id', $request->user()->id);
+        $query = Quotation::where('user_id', $request->user()->id)->where('is_temporary', false);
 
         return response()->json([
             'data' => [
