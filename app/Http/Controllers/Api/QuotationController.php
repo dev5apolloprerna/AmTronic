@@ -40,6 +40,40 @@ class QuotationController extends Controller
         return response()->json(['data' => $quotations]);
     }
 
+ public function pending(Request $request)
+    {
+        return $this->listForStatus($request, 'pending');
+    }
+
+    public function approved(Request $request)
+    {
+        return $this->listForStatus($request, 'approved');
+    }
+
+    public function rejected(Request $request)
+    {
+        return $this->listForStatus($request, 'rejected');
+    }
+
+    private function listForStatus(Request $request, string $status)
+    {
+        $request->validate(['search' => ['nullable', 'string', 'max:255']]);
+        $search = $request->input('search');
+        $quotations = Quotation::with(['customer', 'invoice'])
+            ->where('user_id', $request->user()->id)
+            ->when($status === 'pending', fn ($query) => $query->where('status', 'draft'))
+            ->when($status !== 'pending', fn ($query) => $query->where('status', $status))
+            ->when($search, fn ($query) => $query->where(fn ($nested) => $nested
+                ->where('quotation_number', 'like', "%{$search}%")
+                ->orWhereHas('customer', fn ($customer) => $customer->where('name', 'like', "%{$search}%"))))
+            ->latest()
+            ->get()
+            ->map(fn (Quotation $quotation) => self::summary($quotation));
+
+        return response()->json(['data' => $quotations]);
+    }
+
+
     public function lookups()
     {
         return response()->json(['data' => [
@@ -95,7 +129,6 @@ class QuotationController extends Controller
 
         $this->owned($request, $quotation);
         if (! $quotation->isEditable()) {
-            dd('slkglgj');
             return response()->json(['message' => 'Sent or approved quotations cannot be deleted.'], 409);
         }
         $quotation->delete();

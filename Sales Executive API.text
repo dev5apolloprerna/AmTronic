@@ -106,6 +106,7 @@ Successful response (`200 OK`):
 
 The token used for this request is no longer valid.
 
+
 ### Change password
 
 ```text
@@ -132,6 +133,65 @@ Successful response (`200 OK`):
   "message": "Password changed successfully."
 }
 ```
+## Profile
+
+### View profile
+
+```text
+POST /api/profile
+```
+
+Returns the authenticated employee's `id`, `name`, `email`, `designation`, and
+account `status`.
+
+### Update profile
+
+```text
+POST /api/profile/update
+```
+
+```json
+{
+  "name": "Sales Executive",
+  "email": "sales@example.com"
+}
+```
+
+Both fields are required and the email must be unique.
+
+## Forgot password
+
+Request a six-digit OTP (no bearer token required):
+
+```text
+POST /api/forgot-password/send-otp
+```
+
+```json
+{ "email": "sales@example.com" }
+```
+
+The API always returns the same success response so account email addresses are
+not exposed. Eligible accounts receive an OTP by email that expires in 10
+minutes. Submit it with the new password:
+
+```text
+POST /api/forgot-password/reset
+```
+
+```json
+{
+  "email": "sales@example.com",
+  "otp": "123456",
+  "password": "new-secret",
+  "password_confirmation": "new-secret"
+}
+```
+
+An OTP permits at most five failed attempts. A successful reset consumes the OTP
+and revokes the user's existing bearer token.
+
+
 
 ## Dashboard and form data
 
