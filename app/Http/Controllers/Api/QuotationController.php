@@ -20,7 +20,6 @@ class QuotationController extends Controller
         $request->validate([
             'status' => ['nullable', Rule::in(['created', 'sent', 'approved', 'rejected', 'invoice_sent'])],
             'search' => ['nullable', 'string', 'max:255'],
-            'per_page' => ['nullable', 'integer', 'between:1,100'],
         ]);
 
         $status = $request->input('status');
@@ -34,11 +33,11 @@ class QuotationController extends Controller
             ->when($status === 'sent', fn ($q) => $q->where('status', 'draft')->where('document_status', 'quotation_sent'))
             ->when(in_array($status, ['approved', 'rejected'], true), fn ($q) => $q->where('status', $status))
             ->when($status === 'invoice_sent', fn ($q) => $q->whereHas('invoice', fn ($invoice) => $invoice->where('document_status', 'invoice_approved')))
-            ->latest()->paginate($request->integer('per_page', 15));
+            ->latest()
+            ->get()
+            ->map(fn (Quotation $quotation) => self::summary($quotation));
 
-        $quotations->through(fn (Quotation $quotation) => self::summary($quotation));
-
-        return response()->json($quotations);
+        return response()->json(['data' => $quotations]);
     }
 
     public function lookups()
