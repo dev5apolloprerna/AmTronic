@@ -9,11 +9,21 @@ Route::post('login', [AuthController::class, 'login']);
 
 Route::middleware('api.token')->group(function () {
     Route::post('logout', [AuthController::class, 'logout']);
+    Route::post('forgot-password/send-otp', [AuthController::class, 'sendPasswordResetOtp'])->middleware('throttle:3,1');
+    Route::post('forgot-password/reset', [AuthController::class, 'resetPassword']);
+
     Route::post('change-password', [AuthController::class, 'changePassword']);
+    Route::post('profile', [AuthController::class, 'profile']);
+    Route::post('profile/update', [AuthController::class, 'updateProfile']);
+
     Route::post('dashboard', DashboardController::class);
     Route::post('quotation-lookups', [QuotationController::class, 'lookups']);
 
     Route::post('quotations/list', [QuotationController::class, 'index']);
+    Route::post('quotations/pending', [QuotationController::class, 'pending']);
+    Route::post('quotations/approved', [QuotationController::class, 'approved']);
+    Route::post('quotations/rejected', [QuotationController::class, 'rejected']);
+
     Route::post('quotations/create', [QuotationController::class, 'store']);
     Route::post('quotations/{quotation}/show', [QuotationController::class, 'show']);
     Route::post('quotations/{quotation}/update', [QuotationController::class, 'update']);

@@ -13,6 +13,9 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+
 class SalesExecutiveApiTest extends TestCase
 {
     use RefreshDatabase;
@@ -85,6 +88,65 @@ class SalesExecutiveApiTest extends TestCase
         $this->withToken($token)->postJson('/api/dashboard')->assertUnauthorized();
     }
 
+    public function test_employee_can_view_and_update_profile(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+
+        $this->withToken($token)->postJson('/api/profile')
+            ->assertOk()
+            ->assertJsonPath('data.email', $user->email)
+            ->assertJsonPath('data.designation', 'Sales Executive')
+            ->assertJsonPath('data.status', 'active');
+
+        $this->withToken($token)->postJson('/api/profile/update', [
+            'name' => 'Updated Executive',
+            'email' => 'updated@example.com',
+        ])->assertOk()
+            ->assertJsonPath('data.name', 'Updated Executive')
+            ->assertJsonPath('data.email', 'updated@example.com');
+
+        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Updated Executive']);
+    }
+
+    public function test_forgot_password_otp_can_reset_password_and_revoke_token(): void
+    {
+        Mail::fake();
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+
+        $this->postJson('/api/forgot-password/send-otp', ['email' => $user->email])
+            ->assertOk();
+        Mail::assertSentCount(1);
+        $this->assertDatabaseHas('password_reset_otps', ['email' => $user->email, 'attempts' => 0]);
+
+        DB::table('password_reset_otps')->where('email', $user->email)->update([
+            'otp' => Hash::make('123456'),
+        ]);
+
+        $this->postJson('/api/forgot-password/reset', [
+            'email' => $user->email,
+            'otp' => '123456',
+            'password' => 'replacement',
+            'password_confirmation' => 'replacement',
+        ])->assertOk();
+
+        $this->assertTrue(Hash::check('replacement', $user->fresh()->password));
+        $this->assertDatabaseMissing('password_reset_otps', ['email' => $user->email]);
+        $this->withToken($token)->postJson('/api/profile')->assertUnauthorized();
+    }
+
+    public function test_forgot_password_does_not_reveal_unknown_accounts(): void
+    {
+        Mail::fake();
+
+        $this->postJson('/api/forgot-password/send-otp', ['email' => 'missing@example.com'])
+            ->assertOk()
+            ->assertJsonPath('message', 'If the email is eligible, a password reset OTP has been sent.');
+        Mail::assertNothingSent();
+    }
+
+
     public function test_employee_can_create_list_and_view_only_own_quotations(): void
     {
         $user = $this->salesExecutive();
@@ -106,6 +168,27 @@ class SalesExecutiveApiTest extends TestCase
         $otherToken = $this->token($other);
         $this->withToken($otherToken)->postJson("/api/quotations/{$id}/show")->assertForbidden();
     }
+        public function test_dedicated_quotation_lists_return_pending_approved_and_rejected_records(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+        $payload = $this->quotationPayload();
+
+        $pendingId = $this->withToken($token)->postJson('/api/quotations', $payload)->json('data.id');
+        $approvedId = $this->withToken($token)->postJson('/api/quotations', $payload)->json('data.id');
+        $rejectedId = $this->withToken($token)->postJson('/api/quotations', $payload)->json('data.id');
+        $this->withToken($token)->postJson("/api/quotations/{$approvedId}/mark-sent")->assertOk();
+        $this->withToken($token)->postJson("/api/quotations/{$approvedId}/approve")->assertOk();
+        $this->withToken($token)->postJson("/api/quotations/{$rejectedId}/reject")->assertOk();
+
+        $this->withToken($token)->postJson('/api/quotations/pending')->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $pendingId);
+        $this->withToken($token)->postJson('/api/quotations/approved')->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $approvedId);
+        $this->withToken($token)->postJson('/api/quotations/rejected')->assertOk()
+            ->assertJsonCount(1, 'data')->assertJsonPath('data.0.id', $rejectedId);
+    }
+
 
      public function test_create_endpoint_returns_json_instead_of_redirecting_to_web_login(): void
     {
