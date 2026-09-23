@@ -18,13 +18,13 @@
         .address-cell { width:33%; border-left:1px solid #555; border-right:1px solid #555; padding:1.5mm 5mm; line-height:1.4; font-size:10.5px; }
         .contact-cell { width:33%; padding-left:5mm; line-height:1.4; font-size:10.5px; }
         .icon-row td { padding:0; vertical-align:top; }
-        .icon { width:28px; color:#4f8128; font-size:18px; font-weight:700; text-align:left; }
-        .contact-divider { border-top:1px solid #4f8128; margin:1.5mm 0 1mm; }
+        .icon { width:28px; color:#c02026; font-size:18px; font-weight:700; text-align:left; }
+        .contact-divider { border-top:1px solid #c02026; margin:1.5mm 0 1mm; }
         .tax-table td { padding:0; font-size:12.2px; }
         .tax-label { width:26%; font-size:14px !important; font-weight:700; }
         .tax-colon { width:6%; text-align:center; }
         .accent-bar { margin-top:3mm; height:2.1mm; }
-        .accent-green { float:left; width:15mm; height:2.1mm; background:#4f8128; }
+        .accent-green { float:left; width:15mm; height:2.1mm; background:#c02026; }
         .accent-dark { overflow:hidden; height:2.1mm; background:#141b21; }
 
         /* ================= TITLE + REPORT META ================= */
@@ -34,7 +34,8 @@
         .doc-subtitle { font-size:10.5px; color:#555; margin-top:1mm; }
 
         /* ================= INFO BOXES (same pattern as Buyer/Ship To/Account Details) ================= */
-        .party-box { width:100%; border:1px solid #8ea37d; border-radius:2.6mm; border-collapse:separate !important; border-spacing:0 !important; overflow:hidden !important; background:#fff; margin-bottom:2.5mm; }
+        .party-box { width:100%; border:1px solid #c02026; border-radius:2.6mm; border-collapse:separate !important;
+        border-spacing:0 !important; overflow:hidden !important; background:#fff; margin-bottom:2.5mm; }
         .party-box > tbody > tr > td { padding:0 !important; border:0 !important; vertical-align:top; }
         .party-tag-bar { height:6.8mm; line-height:6.8mm; padding:0 4.5mm; color:#fff; background:#c02026; font-size:12px; font-weight:800; letter-spacing:.3px; white-space:nowrap; overflow:hidden; }
         .party-fields-wrap { padding:1.8mm 4mm 1.5mm 4mm !important; }
@@ -45,15 +46,17 @@
         .party-fields .line { border-bottom:1px dotted #7f857a; padding-left:2.5mm; }
 
         /* ================= REPORT TABLE (green header, rounded) ================= */
-        .items-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid #285e10; border-radius:2.5mm; overflow:hidden; margin-bottom:2.5mm; }
-        .items-table th { height:7mm; padding:1mm; color:#fff; background:#36751b; border-right:1px solid rgba(255,255,255,.5); font-size:10.8px; line-height:1.25; font-weight:700; text-align:center; vertical-align:middle; }
+        .items-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid #c02026;
+        border-radius:2.5mm; overflow:hidden; margin-bottom:2.5mm; }
+        .items-table th { height:7mm; padding:1mm; color:#fff; background:#c02026; border-right:1px solid rgba(255,255,255,.5);
+        font-size:10.8px; line-height:1.25; font-weight:700; text-align:center; vertical-align:middle; }
         .items-table th:last-child, .items-table td:last-child { border-right:0; }
         .items-table td { border-top:1px solid #c7cdc4; border-right:1px solid #c7cdc4; padding:1.6mm; font-size:10px; vertical-align:top; text-align:center; }
         .items-table td.desc-cell { text-align:left; }
         .text-center { text-align:center; } .text-right { text-align:right; }
 
         /* ================= TOTALS ROW ================= */
-        .items-table tfoot td { border-top:1.4px solid #36751b; background:#eaf2e5; font-weight:800; font-size:10.4px; padding:2mm 1.6mm; }
+        .items-table tfoot td { border-top:1.4px solid #c02026; background:#eaf2e5; font-weight:800; font-size:10.4px; padding:2mm 1.6mm; }
         .items-table tfoot .totals-label { text-align:right; padding-right:3mm; }
         .items-table tfoot .closing-row td { background:#c02026; color:#fff; font-size:11px; }
 

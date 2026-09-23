@@ -92,8 +92,10 @@ class QuotationController extends Controller
 
     public function destroy(Request $request, Quotation $quotation)
     {
+
         $this->owned($request, $quotation);
         if (! $quotation->isEditable()) {
+            dd('slkglgj');
             return response()->json(['message' => 'Sent or approved quotations cannot be deleted.'], 409);
         }
         $quotation->delete();
@@ -208,7 +210,18 @@ class QuotationController extends Controller
     private function detail(Quotation $quotation): array
     {
         $quotation->load(['customer', 'items.product', 'invoice']);
-        return self::summary($quotation) + ['quotation' => $quotation];
+        $quotationData = $quotation->toArray();
+        $quotationData['items'] = $quotation->items->map(fn (QuotationItem $item) => [
+            'id' => $item->id,
+            'product_id' => $item->product_id,
+            'product_name' => $item->product?->name,
+            'description' => $item->description,
+            'qty' => $item->qty,
+            'rate' => $item->rate,
+            'amount' => (float) $item->amount,
+        ])->values()->all();
+
+        return self::summary($quotation) + ['quotation' => $quotationData];
     }
 
     private function owned(Request $request, Quotation $quotation): void
@@ -230,18 +243,23 @@ class QuotationController extends Controller
     {
         return $request->validate([
             'product_id' => ['required', Rule::exists('products', 'id')->where('status', 'active')],
-            'despatch_to' => ['nullable', 'string', 'max:255'],
-            'size_mtr' => ['required', 'numeric', 'min:0.01'],
-            'no_of_rolls' => ['required', 'integer', 'min:1'],
-            'price_per_mtr' => ['required', 'numeric', 'min:0'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
+
         ]);
     }
 
     private function itemAttributes(array $item): array
     {
-        return $item + [
-            'total_mtr' => $item['size_mtr'] * $item['no_of_rolls'],
-            'amount' => $item['no_of_rolls'] * $item['price_per_mtr'],
+        return [
+            'product_id' => $item['product_id'],
+            'description' => filled($item['description'] ?? null) ? trim($item['description']) : null,
+            // The database retains its legacy column names; the API deliberately
+            // exposes these values as qty and rate, matching the web quotation form.
+            'no_of_rolls' => $item['qty'],
+            'price_per_mtr' => $item['rate'],
+            'amount' => round($item['qty'] * $item['rate'], 2),
         ];
     }
 
@@ -255,11 +273,13 @@ class QuotationController extends Controller
             'shipping_address_line_2' => ['nullable', 'string', 'max:2000'],
             'shipping_state' => ['required', 'string', Rule::in(State::selectableNames($quotation?->shipping_state))],
             'shipping_city' => ['required', 'string', 'max:100'], 'shipping_pincode' => ['required', 'digits:6'],
-            'items' => ['required', 'array', 'min:1'], 'items.*.product_id' => ['required', 'exists:products,id'],
-            'items.*.despatch_to' => ['nullable', 'string', 'max:255'], 'items.*.size_mtr' => ['required', 'numeric', 'min:0.01'],
-            'items.*.no_of_rolls' => ['required', 'integer', 'min:1'], 'items.*.price_per_mtr' => ['required', 'numeric', 'min:0'],
+            'items' => ['required', 'array', 'min:1'],
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('status', 'active')],
+            'items.*.description' => ['nullable', 'string', 'max:1000'],
+            'items.*.qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'items.*.rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
         ]);
-        $subtotal = collect($data['items'])->sum(fn ($item) => $item['no_of_rolls'] * $item['price_per_mtr']);
+        $subtotal = collect($data['items'])->sum(fn ($item) => $item['qty'] * $item['rate']);
         if (($data['discount_amount'] ?? 0) > $subtotal) {
             abort(response()->json(['message' => 'The discount amount cannot exceed the subtotal.', 'errors' => ['discount_amount' => ['The discount amount cannot exceed the subtotal.']]], 422));
         }

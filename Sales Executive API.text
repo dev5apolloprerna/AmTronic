@@ -33,17 +33,21 @@ login. A user can access only quotations created by that same user.
 | --- | --- | --- |
 | `POST` | `/api/login` | Log in and receive a bearer token. |
 | `POST` | `/api/logout` | Invalidate the current bearer token. |
-| `PUT` | `/api/change-password` | Change the current user's password. |
-| `GET` | `/api/dashboard` | Get quotation counts and recent quotations. |
-| `GET` | `/api/quotation-lookups` | Get customers, active products, and states for the quotation form. |
-| `GET` | `/api/quotations` | List the current user's quotations. |
+| `POST` | `/api/change-password` | Change the current user's password. |
+| `POST` | `/api/dashboard` | Get quotation counts and recent quotations. |
+| `POST` | `/api/quotation-lookups` | Get customers, active products, and states for the quotation form. |
+| `POST` | `/api/quotations/list` | List the current user's quotations. |
+
 | `POST` | `/api/quotations` | Create a quotation. |
-| `GET` | `/api/quotations/{quotation}` | Get one quotation. |
-| `PUT/PATCH` | `/api/quotations/{quotation}` | Update an editable quotation. |
-| `DELETE` | `/api/quotations/{quotation}` | Delete an editable quotation. |
+| `POST` | `/api/quotations/create` | Create a quotation (compatibility URL). |
+| `POST` | `/api/quotations/{quotation}/show` | Get one quotation. |
+| `POST` | `/api/quotations/{quotation}/update` | Update an editable quotation. |
+| `POST` | `/api/quotations/{quotation}/delete` | Delete an editable quotation. |
+
 | `POST` | `/api/quotations/{quotation}/items` | Immediately save a new product line. |
-| `PUT/PATCH` | `/api/quotations/{quotation}/items/{item}` | Save changes to one product line. |
-| `DELETE` | `/api/quotations/{quotation}/items/{item}` | Delete one product line. |
+| `POST` | `/api/quotations/{quotation}/items/{item}/update` | Save changes to one product line. |
+| `POST` | `/api/quotations/{quotation}/items/{item}/delete` | Delete one product line. |
+
 | `POST` | `/api/quotations/{quotation}/mark-sent` | Mark a new quotation as sent. |
 | `POST` | `/api/quotations/{quotation}/approve` | Approve a sent quotation. |
 | `POST` | `/api/quotations/{quotation}/reject` | Reject a new quotation. |
@@ -257,7 +261,8 @@ to list all of the user's quotations.
 ### Create quotation
 
 ```text
-POST /api/quotations
+`POST /api/quotations/create` is an equivalent compatibility URL. Prefer
+`POST /api/quotations` for new integrations.
 ```
 
 Request:
@@ -279,16 +284,24 @@ Request:
   "items": [
     {
       "product_id": 3,
-      "despatch_to": null,
-      "size_mtr": 10,
-      "no_of_rolls": 2,
-      "price_per_mtr": 500
+      "description": "Clear glass roll",
+      "qty": 2,
+      "rate": 500
+    },
+    {
+      "product_id": 8,
+      "description": "Second product line",
+      "qty": 3,
+      "rate": 100
     }
   ]
 }
 ```
 
-Required fields are `customer_id`, `quotation_date`, the shipping address,
+The `items` array accepts multiple products; every object is saved as a separate
+quotation line in the same database transaction. Required fields are
+`customer_id`, `quotation_date`, the shipping address,
+
 state, city and 6-digit pincode, plus at least one item. For every item,
 `product_id`, `size_mtr`, `no_of_rolls`, and `price_per_mtr` are required.
 `no_of_rolls` must be a whole number. The discount cannot exceed the items'
@@ -309,7 +322,7 @@ Successful response (`201 Created`):
     },
     "status": "Quotation Created",
     "status_code": "draft",
-    "total_amount": 1180,
+    "total_amount": 1534,
     "editable": true,
     "quotation": {
       "id": 25,
@@ -317,17 +330,27 @@ Successful response (`201 Created`):
       "customer_id": 7,
       "user_id": 2,
       "status": "draft",
-      "sub_total": "1000.00",
-      "gst_amount": "180.00",
-      "total_amount": "1180.00",
+      "sub_total": "1300.00",
+      "gst_amount": "234.00",
+      "total_amount": "1534.00",
       "items": [
         {
           "id": 41,
           "product_id": 3,
-          "size_mtr": "10.00",
-          "no_of_rolls": "2.00",
-          "price_per_mtr": "500.00",
-          "amount": "1000.00"
+          "product_name": "Glass Roll",
+          "description": "Clear glass roll",
+          "qty": 2,
+          "rate": 500,
+          "amount": 1000
+        },
+        {
+          "id": 42,
+          "product_id": 8,
+          "product_name": "Second Roll",
+          "description": "Second product line",
+          "qty": 3,
+          "rate": 100,
+          "amount": 300
         }
       ]
     }
@@ -344,7 +367,7 @@ customer, product data, and invoice (when one exists).
 POST /api/quotations/{quotation}/show
 ```
 
-Example URL: `GET /api/quotations/25`
+Example URL: `POST /api/quotations/25/show`
 
 Request body: none.
 
@@ -402,10 +425,9 @@ Request:
 ```json
 {
   "product_id": 3,
-  "despatch_to": "Customer warehouse",
-  "size_mtr": 10,
-  "no_of_rolls": 2,
-  "price_per_mtr": 500
+  "description": "Clear glass roll",
+  "qty": 2,
+  "rate": 500
 }
 ```
 
@@ -424,8 +446,8 @@ Successful response (`201 Created`):
       "gst_amount": "360.00",
       "total_amount": "2360.00",
       "items": [
-        { "id": 41, "product_id": 3, "amount": "1000.00" },
-        { "id": 42, "product_id": 3, "amount": "1000.00" }
+        { "id": 41, "product_id": 3, "product_name": "Glass Roll", "description": "Clear glass roll", "qty": 2, "rate": 500, "amount": 1000 },
+        { "id": 42, "product_id": 3, "product_name": "Glass Roll", "description": "Clear glass roll", "qty": 2, "rate": 500, "amount": 1000 }
       ]
     }
   }
@@ -662,3 +684,12 @@ Invalid workflow operation (`409 Conflict`):
 ```
 
 Unknown quotation IDs return `404 Not Found`.
+
+## Avoiding the web login page
+
+Always include the `/api` prefix and send `Accept: application/json`. For
+example, quotation creation is `POST /api/quotations`, not
+`POST /quotations`. The URL without `/api` belongs to the browser application
+and can redirect an unauthenticated request to `/login`. A request to the API
+URL without a valid bearer token always returns the JSON `401` response shown
+above; it does not return or redirect to the HTML login page.

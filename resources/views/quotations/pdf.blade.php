@@ -17,13 +17,13 @@
         .address-cell { width:31%; border-left:1px solid #555; border-right:1px solid #555; padding:1.5mm 5mm; line-height:1.4; font-size:10.5px; }
         .contact-cell { width:30%; padding-left:5mm; line-height:1.4; font-size:10.5px; }
         .icon-row td { padding:0; vertical-align:top; }
-        .icon { width:28px; color:#4f8128; font-size:18px; font-weight:700; text-align:left; }
-        .contact-divider { border-top:1px solid #4f8128; margin:1.5mm 0 1mm; }
+        .icon { width:28px; color:#c02026; font-size:18px; font-weight:700; text-align:left; }
+        .contact-divider { border-top:1px solid #c02026; margin:1.5mm 0 1mm; }
         .tax-table td { padding:0; font-size:12.2px; }
         .tax-label { width:34%; font-size:14px !important; font-weight:700; }
         .tax-colon { width:8%; text-align:center; }
         .accent-bar { margin-top:3mm; height:2.1mm; }
-        .accent-green { float:left; width:15mm; height:2.1mm; background:#4f8128; }
+        .accent-green { float:left; width:15mm; height:2.1mm; background:#c02026; }
         .accent-dark { overflow:hidden; height:2.1mm; background:#141b21; }
         .quotation-top-layout { table-layout:fixed; margin-top:3mm; margin-bottom:2.5mm; }
         .quotation-title-cell { width:50%; padding-right:6mm; vertical-align:middle; }
@@ -38,42 +38,46 @@
         .party-meta-layout > tbody > tr > td { vertical-align:top; }
         .bill-cell { width:50%; padding-right:2mm !important; border:0 !important; vertical-align:top; }
         .ship-cell { width:50%; padding-left:2mm !important; border:0 !important; vertical-align:top; }
-        .party-box { width:100%; height:45mm; border:1px solid #8ea37d; border-radius:2.6mm; border-collapse:separate !important; border-spacing:0 !important; overflow:hidden !important; background:#fff; }
+        .party-box { width:100%; height:45mm; border:1px solid #c02026; border-radius:2.6mm;
+        border-collapse:separate !important; border-spacing:0 !important; overflow:hidden !important; background:#fff; }
         .party-box > tbody > tr > td { padding:0 !important; border:0 !important; vertical-align:top; }
-        .party-tag-bar { height:9mm;vertical-align:middle; line-height:9mm; padding:0 4.5mm; color:#fff; background:#c02026; font-size:12px; font-weight:800; letter-spacing:.3px; white-space:nowrap; overflow:hidden; }
+        .party-tag-bar { height:9mm;vertical-align:middle; line-height:9mm; padding:0 4.5mm; color:#fff;
+        background:#c02026; font-size:12px; font-weight:800; letter-spacing:.3px; white-space:nowrap; overflow:hidden; }
         .party-fields-wrap { padding:2mm 3.6mm 1.8mm 3.6mm !important; }
         .party-fields { table-layout:fixed; border-collapse:collapse; margin:0; }
         .party-fields td { height:4.4mm; vertical-align:middle; font-size:11.8px; }
         .party-fields .label { width:34%; white-space:nowrap; }
         .party-fields .colon { width:6%; text-align:center; }
         .party-fields .line { border-bottom:1px dotted #7f857a; }
-        .product-table {width:100%;  border-collapse:separate; border-spacing:0; border:1px solid #71905e; border-radius:2.5mm; overflow:hidden; }
-        .product-table th { height:8mm; padding:1mm; color:#fff; background:#36751b; border-right:1px solid rgba(255,255,255,.5); font-size:12.8px; line-height:1.25; font-weight:700; text-align:center; vertical-align:middle; }
+        .product-table {width:100%;  border-collapse:separate; border-spacing:0; border:1px solid #c02026; border-radius:2.5mm; overflow:hidden; }
+        .product-table th { height:8mm; padding:1mm; color:#fff; background:#c02026;
+        border-right:1px solid rgba(255,255,255,.5); font-size:12.8px; line-height:1.25; font-weight:700; text-align:center; vertical-align:middle; }
         .product-table th:last-child, .product-table td:last-child { border-right:0; }
         .product-table td { height:4.8mm; border-top:1px solid #c7cdc4; border-right:1px solid #c7cdc4; padding:.3mm 1.4mm; font-size:12.5px; vertical-align:middle; }
         .center { text-align:center; } .right { text-align:right; }
-        .rolls-total-row td { height:4.8mm; border-top:1.4px solid #71905e; padding:.3mm 1.4mm; font-size:12.5px; font-weight:700; background:#eef3ea; }
-        .total-rolls-label { color:#2f6d16; }
-        .total-rolls-value { color:#2f6d16; }
+        .rolls-total-row td { height:4.8mm; border-top:1.4px solid #c02026; padding:.3mm 1.4mm; font-size:12.5px; font-weight:700; background:#eef3ea; }
+        .total-rolls-label { color:#c02026; }
+        .total-rolls-value { color:#c02026; }
         .bottom-layout { margin-top:1mm; }
         .terms-cell { float:left; width:55%; padding:1.5mm 5mm 0 1mm; }
         .totals-cell { float:left; width:42%; }
         .bottom-clear { clear:both; }
         .terms-title-row { margin-bottom:1mm; height:8mm; font-size:0; }
-        .terms-icon { display:inline-block; vertical-align:middle; width:8mm; height:8mm; line-height:8mm; border-radius:4mm; background:#4f8128; color:#fff; text-align:center; font-weight:700; font-size:12px; }
+        .terms-icon { display:inline-block; vertical-align:middle; width:8mm; height:8mm; line-height:8mm;
+        border-radius:4mm; background:#4f8128; color:#fff; text-align:center; font-weight:700; font-size:12px; }
         .terms-heading { display:inline-block; vertical-align:middle; padding-left:2mm; font-size:15px; font-weight:800; }
         .terms-list td { height:3.8mm; font-size:11.8px; vertical-align:middle; }
         .term-number { width:7mm; text-align:right; padding-right:2mm; }
         .term-line { display:inline-block; width:45mm; border-bottom:1px solid #777; }
-        .totals-table { table-layout:fixed; border-collapse:separate; border-spacing:0; border:1px solid #799169; border-radius:2.4mm; overflow:hidden; }
-        .totals-table td { height:5mm; border-bottom:1px solid #aeb8a8; border-right:1px solid #aeb8a8; padding:0 3mm; font-size:13.2px; vertical-align:middle; }
+        .totals-table { table-layout:fixed; border-collapse:separate; border-spacing:0; border:1px solid #c02026; border-radius:2.4mm; overflow:hidden; }
+        .totals-table td { height:5mm; border-bottom:1px solid #c02026; border-right:1px solid #c02026; padding:0 3mm; font-size:13.2px; vertical-align:middle; }
         .totals-table tr:last-child td { border-bottom:0; }
         .total-label { width:51%; } .rupee { width:11%; text-align:center; border-right:none !important; } .total-value { width:38%; text-align:right; }
-        .grand-total .total-label, .grand-label { color:#fff; background:#2f6d16; font-weight:800; font-size:11px; }
+        .grand-total .total-label, .grand-label { color:#fff; background:#c02026; font-weight:800; font-size:11px; }
         .grand-total .rupee, .grand-total .total-value { font-weight:800; }
         .signature-block { width:45%; float:right; text-align:center; margin-top:8mm; }
         .signature-clear { clear:both; }
-        .company-sign { font-size:13.8px; margin-bottom:0.5mm; } .company-sign strong { color:#2f6d16; font-size:13.8px; }
+        .company-sign { font-size:13.8px; margin-bottom:0.5mm; } .company-sign strong { color:#c02026; font-size:13.8px; }
         .signature-image-wrap { width:46mm; height:9mm; margin:0 auto 1mm; text-align:center; overflow:hidden; }
         .signature-image { display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom; }
         .sign-line { width:45mm; margin:0 auto 1mm; border-top:1px solid #222; } .authorized { font-size:13.5px; }
@@ -232,7 +236,7 @@
             <div class="bottom-clear"></div>
         </div>
     <div class="signature-block">
-    	<div class="company-sign">For <strong>AmTronics</strong></div>
+    	<div class="company-sign">For <strong>Amtronics</strong></div>
     	<div class="signature-image-wrap">
     		<img src="{{ $signaturePath }}" class="signature-image" alt="Authorised Signature"></div>
     		<div class="sign-line"></div>

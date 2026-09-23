@@ -93,7 +93,7 @@ class QuotationController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateData($request);
-
+dd('skgjlgksg');
         $subTotal = $this->calculateItemsSubTotal($data['items']);
         if ((float) ($data['discount_amount'] ?? 0) > $subTotal) {
             return back()->withErrors([
