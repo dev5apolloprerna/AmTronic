@@ -218,7 +218,7 @@ products list includes active products only.
 ### List quotations
 
 ```text
-GET /api/quotations?status=created&search=QUO-2026&per_page=15
+GET /api/quotations/list
 ```
 
 All query parameters are optional:
@@ -233,7 +233,6 @@ Successful response (`200 OK`):
 
 ```json
 {
-  "current_page": 1,
   "data": [
     {
       "id": 25,
@@ -248,23 +247,12 @@ Successful response (`200 OK`):
       "total_amount": 1180,
       "editable": true
     }
-  ],
-  "first_page_url": "http://127.0.0.1:8000/api/quotations?page=1",
-  "from": 1,
-  "last_page": 1,
-  "last_page_url": "http://127.0.0.1:8000/api/quotations?page=1",
-  "links": [],
-  "next_page_url": null,
-  "path": "http://127.0.0.1:8000/api/quotations",
-  "per_page": 15,
-  "prev_page_url": null,
-  "to": 1,
-  "total": 1
 }
 ```
 
-Laravel supplies the complete `links` array in the real paginated response; it
-is shortened above for readability.
+The endpoint does not paginate. It returns every matching quotation owned by
+the authenticated user in newest-first order. Send an empty JSON object (`{}`)
+to list all of the user's quotations.
 
 ### Create quotation
 
@@ -353,7 +341,7 @@ customer, product data, and invoice (when one exists).
 ### Get one quotation
 
 ```text
-GET /api/quotations/{quotation}
+POST /api/quotations/{quotation}/show
 ```
 
 Example URL: `GET /api/quotations/25`
@@ -366,11 +354,10 @@ response, without the top-level `message`.
 ### Update quotation
 
 ```text
-PUT /api/quotations/{quotation}
-PATCH /api/quotations/{quotation}
+POST /api/quotations/{quotation}/update
 ```
 
-Example URL: `PUT /api/quotations/25`
+Example URL: `POST /api/quotations/25/update`
 
 Request: send the complete quotation payload shown under **Create quotation**.
 
@@ -401,7 +388,8 @@ or deletes a product. Each request is written to the database immediately and
 returns the complete refreshed quotation, including recalculated `sub_total`,
 GST, round-off, and `total_amount`. The employee does not have to tap the final
 quotation submit/save button first. If the app is closed, call
-`GET /api/quotations/{quotation}` when it reopens to restore all saved products.
+`POST /api/quotations/{quotation}/show` when it reopens to restore all saved
+products.
 
 #### Add a product
 
@@ -451,11 +439,12 @@ number of at least `1`, and `price_per_mtr` cannot be negative.
 #### Update/save one product
 
 ```text
-PATCH /api/quotations/25/items/42
+POST /api/quotations/25/items/42/update
 ```
 
-Request: send the same five product fields shown in **Add a product**. `PUT` is
-also supported. The successful `200 OK` response is:
+Request: send the same five product fields shown in **Add a product**. This
+endpoint uses `POST` like every other API endpoint. The successful `200 OK`
+response is:
 
 ```json
 {
@@ -481,7 +470,7 @@ shortened above for readability.
 #### Delete one product
 
 ```text
-DELETE /api/quotations/25/items/42
+POST /api/quotations/25/items/42/delete
 ```
 
 Request body: none.
@@ -516,13 +505,13 @@ the quotation has been sent, approved, or rejected.
 2. Each time **Add New Product** is tapped, call
    `POST /api/quotations/{quotation_id}/items`; keep the returned `item_id`.
 3. To save line changes, call
-   `PATCH /api/quotations/{quotation_id}/items/{item_id}`.
+   `POST /api/quotations/{quotation_id}/items/{item_id}/update`.
 4. To remove a line, call
-   `DELETE /api/quotations/{quotation_id}/items/{item_id}`.
+   `POST /api/quotations/{quotation_id}/items/{item_id}/delete`.
 5. After every add/update/delete, render amounts from the returned `data`; they
    already contain the server-calculated totals.
-6. On app restart, call `GET /api/quotations/{quotation_id}` and rebuild the
-   screen from `data.quotation.items`.
+6. On app restart, call `POST /api/quotations/{quotation_id}/show` and rebuild
+   the screen from `data.quotation.items`.
 7. When the quotation is ready, call
    `POST /api/quotations/{quotation_id}/mark-sent`. Product lines become
    read-only after this step.
@@ -531,10 +520,10 @@ the quotation has been sent, approved, or rejected.
 ### Delete quotation
 
 ```text
-DELETE /api/quotations/{quotation}
+POST /api/quotations/{quotation}/delete
 ```
 
-Example URL: `DELETE /api/quotations/25`
+Example URL: `POST /api/quotations/25/delete`
 
 Request body: none.
 

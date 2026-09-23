@@ -12,12 +12,17 @@ Route::middleware('api.token')->group(function () {
     Route::post('change-password', [AuthController::class, 'changePassword']);
     Route::post('dashboard', DashboardController::class);
     Route::post('quotation-lookups', [QuotationController::class, 'lookups']);
-    Route::apiResource('quotations', QuotationController::class);
-        
+
+    Route::post('quotations/list', [QuotationController::class, 'index']);
+    Route::post('quotations/create', [QuotationController::class, 'store']);
+    Route::post('quotations/{quotation}/show', [QuotationController::class, 'show']);
+    Route::post('quotations/{quotation}/update', [QuotationController::class, 'update']);
+    Route::post('quotations/{quotation}/delete', [QuotationController::class, 'destroy']);
+
     Route::post('quotations/{quotation}/items', [QuotationController::class, 'storeItem']);
-    Route::post('quotations/{quotation}/items/{item}', [QuotationController::class, 'updateItem']);
-    Route::post('quotations/{quotation}/items/{item}', [QuotationController::class, 'updateItem']);
-    Route::post('quotations/{quotation}/items/{item}', [QuotationController::class, 'destroyItem']);
+    Route::post('quotations/{quotation}/items/{item}/update', [QuotationController::class, 'updateItem']);
+    Route::post('quotations/{quotation}/items/{item}/delete', [QuotationController::class, 'destroyItem']);
+
 
     Route::post('quotations/{quotation}/mark-sent', [QuotationController::class, 'markSent']);
     Route::post('quotations/{quotation}/approve', [QuotationController::class, 'approve']);

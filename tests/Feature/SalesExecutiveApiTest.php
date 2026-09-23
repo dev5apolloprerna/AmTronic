@@ -76,13 +76,13 @@ class SalesExecutiveApiTest extends TestCase
         $user = $this->salesExecutive();
         $token = $this->token($user);
 
-        $this->withToken($token)->getJson('/api/dashboard')->assertOk()->assertJsonPath('data.quotation_counts.all', 0);
-        $this->withToken($token)->putJson('/api/change-password', [
+        $this->withToken($token)->postJson('/api/dashboard')->assertOk()->assertJsonPath('data.quotation_counts.all', 0);
+        $this->withToken($token)->postJson('/api/change-password', [
             'current_password' => 'password', 'password' => 'new-secret', 'password_confirmation' => 'new-secret',
         ])->assertOk();
         $this->assertTrue(Hash::check('new-secret', $user->fresh()->password));
         $this->withToken($token)->postJson('/api/logout')->assertOk();
-        $this->withToken($token)->getJson('/api/dashboard')->assertUnauthorized();
+        $this->withToken($token)->postJson('/api/dashboard')->assertUnauthorized();
     }
 
     public function test_employee_can_create_list_and_view_only_own_quotations(): void
@@ -94,14 +94,17 @@ class SalesExecutiveApiTest extends TestCase
             ->assertCreated()->assertJsonPath('data.status_code', 'draft');
         $id = $created->json('data.id');
 
-        $this->withToken($token)->getJson('/api/quotations?status=created')->assertOk()
-            ->assertJsonPath('data.0.id', $id);
-        $this->withToken($token)->getJson("/api/quotations/{$id}")->assertOk()
+        $this->withToken($token)->postJson('/api/quotations/list', ['status' => 'created'])->assertOk()
+            ->assertJsonPath('data.0.id', $id)
+            ->assertJsonMissingPath('current_page')
+            ->assertJsonMissingPath('links')
+            ->assertJsonMissingPath('per_page');
+        $this->withToken($token)->postJson("/api/quotations/{$id}/show")->assertOk()
             ->assertJsonPath('data.editable', true);
 
         $other = $this->salesExecutive();
         $otherToken = $this->token($other);
-        $this->withToken($otherToken)->getJson("/api/quotations/{$id}")->assertForbidden();
+        $this->withToken($otherToken)->postJson("/api/quotations/{$id}/show")->assertForbidden();
     }
 
     public function test_approved_quotation_cannot_be_edited_in_api_or_admin(): void
@@ -114,7 +117,7 @@ class SalesExecutiveApiTest extends TestCase
         $this->withToken($token)->postJson("/api/quotations/{$id}/mark-sent")->assertOk();
         $this->withToken($token)->postJson("/api/quotations/{$id}/approve")->assertOk()
             ->assertJsonPath('data.editable', false);
-        $this->withToken($token)->putJson("/api/quotations/{$id}", $payload)->assertStatus(409);
+        $this->withToken($token)->postJson("/api/quotations/{$id}/update", $payload)->assertStatus(409);
 
         $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
         $quotation = Quotation::findOrFail($id);
@@ -142,12 +145,12 @@ class SalesExecutiveApiTest extends TestCase
         $itemId = $added->json('item_id');
 
         // A fresh request (such as reopening the app) returns the persisted line.
-        $this->withToken($token)->getJson("/api/quotations/{$quotationId}")
+        $this->withToken($token)->postJson("/api/quotations/{$quotationId}/show")
             ->assertOk()
             ->assertJsonPath('data.quotation.items.1.id', $itemId)
             ->assertJsonPath('data.quotation.items.1.amount', '300.00');
 
-        $this->withToken($token)->patchJson("/api/quotations/{$quotationId}/items/{$itemId}", [
+        $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/update", [
             'product_id' => $productId,
             'size_mtr' => 5,
             'no_of_rolls' => 4,
@@ -156,7 +159,7 @@ class SalesExecutiveApiTest extends TestCase
             ->assertJsonPath('data.quotation.sub_total', '500.00')
             ->assertJsonPath('data.total_amount', 590);
 
-        $this->withToken($token)->deleteJson("/api/quotations/{$quotationId}/items/{$itemId}")
+        $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/delete")
             ->assertOk()
             ->assertJsonCount(1, 'data.quotation.items')
             ->assertJsonPath('data.quotation.sub_total', '100.00')
@@ -173,11 +176,11 @@ class SalesExecutiveApiTest extends TestCase
         $itemId = $created->json('data.quotation.items.0.id');
 
         $otherToken = $this->token($this->salesExecutive());
-        $this->withToken($otherToken)->deleteJson("/api/quotations/{$quotationId}/items/{$itemId}")
+        $this->withToken($otherToken)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/delete")
             ->assertForbidden();
 
         $this->withToken($ownerToken)->postJson("/api/quotations/{$quotationId}/mark-sent")->assertOk();
-        $this->withToken($ownerToken)->deleteJson("/api/quotations/{$quotationId}/items/{$itemId}")
+        $this->withToken($ownerToken)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/delete")
             ->assertStatus(409);
     }
 }
