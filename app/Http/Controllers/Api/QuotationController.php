@@ -26,6 +26,7 @@ class QuotationController extends Controller
         $search = $request->input('search');
         $quotations = Quotation::with(['customer', 'invoice'])
             ->where('user_id', $request->user()->id)
+            ->where('is_temporary', false)
             ->when($search, fn ($q) => $q->where(fn ($qq) => $qq
                 ->where('quotation_number', 'like', "%{$search}%")
                 ->orWhereHas('customer', fn ($customer) => $customer->where('name', 'like', "%{$search}%"))))
@@ -40,7 +41,7 @@ class QuotationController extends Controller
         return response()->json(['data' => $quotations]);
     }
 
- public function pending(Request $request)
+       public function pending(Request $request)
     {
         return $this->listForStatus($request, 'pending');
     }
@@ -61,6 +62,7 @@ class QuotationController extends Controller
         $search = $request->input('search');
         $quotations = Quotation::with(['customer', 'invoice'])
             ->where('user_id', $request->user()->id)
+            ->where('is_temporary', false)
             ->when($status === 'pending', fn ($query) => $query->where('status', 'draft'))
             ->when($status !== 'pending', fn ($query) => $query->where('status', $status))
             ->when($search, fn ($query) => $query->where(fn ($nested) => $nested
@@ -85,15 +87,48 @@ class QuotationController extends Controller
 
     public function store(Request $request)
     {
-        $data = $this->validated($request);
-        $quotation = DB::transaction(function () use ($request, $data) {
-            $quotation = Quotation::create($this->attributes($data) + [
-                'quotation_number' => NumberSetting::generateNext('quotation'),
-                'user_id' => $request->user()->id,
-                'status' => 'draft',
+         $temporaryQuotation = null;
+        if ($request->filled('quotation_id')) {
+            $temporaryQuotation = Quotation::findOrFail($request->integer('quotation_id'));
+            $this->owned($request, $temporaryQuotation);
+            abort_unless($temporaryQuotation->is_temporary, 409, 'This quotation has already been saved.');
+        }
+
+        $usingSavedItems = $temporaryQuotation && ! $request->has('items');
+        if ($usingSavedItems) {
+            $request->merge([
+                'items' => $temporaryQuotation->items()->get()->map(fn (QuotationItem $item) => [
+                    'product_id' => $item->product_id,
+                    'description' => $item->description,
+                    'qty' => $item->qty,
+                    'rate' => $item->rate,
+                ])->all(),
             ]);
-            $this->syncItems($quotation, $data['items']);
+        }
+
+        $data = $this->validated($request);
+        $quotation = DB::transaction(function () use ($request, $data, $temporaryQuotation, $usingSavedItems) {
+            $attributes = collect($this->attributes($data))->except('quotation_id')->all() + [
+                'quotation_number' => NumberSetting::generateNext('quotation'),
+                'is_temporary' => false,
+            ];
+
+            if ($temporaryQuotation) {
+                $quotation = $temporaryQuotation;
+                $quotation->update($attributes);
+                if (! $usingSavedItems) {
+                    $quotation->items()->delete();
+                    $this->syncItems($quotation, $data['items']);
+                }
+            } else {
+                $quotation = Quotation::create($attributes + [
+                    'user_id' => $request->user()->id,
+                    'status' => 'draft',
+                ]);
+                $this->syncItems($quotation, $data['items']);
+            }
             $quotation->recalculateTotals();
+
             return $quotation;
         });
 
@@ -139,24 +174,43 @@ class QuotationController extends Controller
      * This intentionally does not wait for the complete quotation update, so
      * an interrupted mobile session can be restored with show().
      */
-    public function storeItem(Request $request, Quotation $quotation)
+    public function storeItem(Request $request, ?Quotation $quotation = null)
     {
-        $this->owned($request, $quotation);
+        $data = $this->validatedStoreItems($request);
+
+        if (! $quotation && filled($data['quotation_id'] ?? null)) {
+            $quotation = Quotation::findOrFail($data['quotation_id']);
+        }
+
+        if ($quotation) {
+            $this->owned($request, $quotation);
+        } else {
+            $quotation = Quotation::firstOrCreate([
+                'user_id' => $request->user()->id,
+                'is_temporary' => true,
+            ], [
+                'quotation_number' => null,
+                'customer_id' => null,
+                'quotation_date' => null,
+                'status' => 'draft',
+            ]);
+        }
         if (! $quotation->isEditable()) {
             return $this->itemNotEditableResponse();
         }
 
-        $data = $this->validatedItem($request);
-        $item = DB::transaction(function () use ($quotation, $data) {
-            $item = $quotation->items()->create($this->itemAttributes($data));
+        $items = DB::transaction(function () use ($quotation, $data) {
+            $items = collect($data['items'])->map(
+                fn (array $item) => $quotation->items()->create($this->itemAttributes($item)),
+            );
             $quotation->recalculateTotals();
-
-            return $item;
+            return $items;
         });
 
         return response()->json([
-            'message' => 'Quotation product added successfully.',
-            'item_id' => $item->id,
+            'message' => $quotation->is_temporary ? 'Products saved before quotation completion.' : 'Quotation products added successfully.',
+            'quotation_id' => $quotation->id,
+            'item_ids' => $items->pluck('id')->all(),
             'data' => $this->detail($quotation),
         ], 201);
     }
@@ -234,7 +288,7 @@ class QuotationController extends Controller
     {
         return [
             'id' => $quotation->id, 'quotation_number' => $quotation->quotation_number,
-            'quotation_date' => $quotation->quotation_date->toDateString(), 'customer' => $quotation->customer,
+            'quotation_date' => $quotation->quotation_date?->toDateString(), 'customer' => $quotation->customer,
             'status' => $quotation->displayStatus(), 'status_code' => $quotation->displayStatusClass(),
             'total_amount' => (float) $quotation->total_amount, 'editable' => $quotation->isEditable(),
         ];
@@ -279,7 +333,20 @@ class QuotationController extends Controller
             'description' => ['nullable', 'string', 'max:1000'],
             'qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
+            'quotation_id' => ['nullable', 'integer', 'exists:quotations,id'],
 
+        ]);
+    }
+
+  private function validatedStoreItems(Request $request): array
+    {
+        return $request->validate([
+            'quotation_id' => ['nullable', 'integer', 'exists:quotations,id'],
+            'items' => ['required', 'array', 'min:1', 'max:100'],
+            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('status', 'active')],
+            'items.*.description' => ['nullable', 'string', 'max:1000'],
+            'items.*.qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
+            'items.*.rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
         ]);
     }
 
@@ -311,6 +378,7 @@ class QuotationController extends Controller
             'items.*.description' => ['nullable', 'string', 'max:1000'],
             'items.*.qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'items.*.rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
+            'quotation_id' => ['nullable', 'integer', 'exists:quotations,id'],
         ]);
         $subtotal = collect($data['items'])->sum(fn ($item) => $item['qty'] * $item['rate']);
         if (($data['discount_amount'] ?? 0) > $subtotal) {

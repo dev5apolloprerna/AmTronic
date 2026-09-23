@@ -318,6 +318,128 @@ The endpoint does not paginate. It returns every matching quotation owned by
 the authenticated user in newest-first order. Send an empty JSON object (`{}`)
 to list all of the user's quotations.
 
+### Dedicated status lists
+
+The mobile quotation tabs may call `POST /api/quotations/pending`,
+`POST /api/quotations/approved`, and `POST /api/quotations/rejected`. Each accepts
+an optional `search` value and returns the same summary objects as the main list.
+Pending includes both newly created and sent quotations that have not yet been
+approved or rejected.
+
+### Products before saving a quotation
+
+Use `POST /api/quotations/items` when no quotation ID exists yet. The first call
+creates a temporary row in the normal `quotations` table for the authenticated
+employee, adds the product to `quotation_items`, and returns `quotation_id`.
+For every further product, call the **same URL** and include that `quotation_id`
+in the request body. The same ID can be restored with
+`POST /api/quotations/{quotation}/show`, even after the app restarts.
+
+When the user saves the quotation, send that `quotation_id` to
+`POST /api/quotations` or `POST /api/quotations/create` with all header fields
+and omit `items`. The API completes the same quotation row, assigns its official
+quotation number, and keeps its existing products and calculated amounts.
+
+#### Add the first product
+
+```text
+POST /api/quotations/items
+Authorization: Bearer <token>
+```
+
+Request (do not send `quotation_id` on the first call):
+
+```json
+{
+  "product_id": 3,
+  "description": "Clear glass product",
+  "qty": 2.5,
+  "rate": 80
+}
+```
+
+Response (`201 Created`):
+
+```json
+{
+  "message": "Product saved before quotation completion.",
+  "quotation_id": 41,
+  "item_id": 86,
+  "data": {
+    "id": 41,
+    "quotation_number": null,
+    "quotation_date": null,
+    "status": "Quotation Created",
+    "status_code": "draft",
+    "total_amount": 200,
+    "editable": true,
+    "quotation": {
+      "id": 41,
+      "user_id": 2,
+      "is_temporary": true,
+      "items": [
+        {
+          "id": 86,
+          "product_id": 3,
+          "product_name": "Clear Glass",
+          "description": "Clear glass product",
+          "qty": 2.5,
+          "rate": 80,
+          "amount": 200
+        }
+      ]
+    }
+  }
+}
+```
+
+#### Add another product with the same API
+
+Call the identical URL and send the returned `quotation_id`:
+
+```text
+POST /api/quotations/items
+```
+
+```json
+{
+  "quotation_id": 41,
+  "product_id": 8,
+  "description": "Second product",
+  "qty": 1,
+  "rate": 100
+}
+```
+
+The response contains the same `quotation_id` and the complete updated product
+list. Save `quotation_id` in the app state; after reopening the app, restore the
+temporary quotation with `POST /api/quotations/41/show`.
+
+#### Complete the quotation
+
+```text
+POST /api/quotations
+```
+
+```json
+{
+  "quotation_id": 41,
+  "customer_id": 7,
+  "quotation_date": "2026-09-23",
+  "gst_applicable": true,
+  "shipping_address_different": false,
+  "shipping_address": "Main Road",
+  "shipping_state": "Gujarat",
+  "shipping_city": "Surat",
+  "shipping_pincode": "395001"
+}
+```
+
+Do not send `items` in this request. A successful `201 Created` response keeps
+`data.id` equal to `41`, changes `data.quotation.is_temporary` to `false`, assigns
+`quotation_number`, and retains the previously added product lines.
+
+
 ### Create quotation
 
 ```text
