@@ -18,13 +18,13 @@
         .address-cell { width:31%; border-left:1px solid #555; border-right:1px solid #555; padding:1.5mm 5mm; line-height:1.4; font-size:10.5px; }
         .contact-cell { width:30%; padding-left:5mm; line-height:1.4; font-size:10.5px; }
         .icon-row td { padding:0; vertical-align:top; }
-        .icon { width:28px; color:#4f8128; font-size:18px; font-weight:700; text-align:left; }
-        .contact-divider { border-top:1px solid #4f8128; margin:1.5mm 0 1mm; }
+        .icon { width:28px; color:#c02026; font-size:18px; font-weight:700; text-align:left; }
+        .contact-divider { border-top:1px solid #c02026; margin:1.5mm 0 1mm; }
         .tax-table td { padding:0; font-size:12.2px; }
         .tax-label { width:34%; font-size:14px !important; font-weight:700; }
         .tax-colon { width:8%; text-align:center; }
         .accent-bar { margin-top:3mm; height:2.1mm; }
-        .accent-green { float:left; width:15mm; height:2.1mm; background:#4f8128; }
+        .accent-green { float:left; width:15mm; height:2.1mm; background:#c02026; }
         .accent-dark { overflow:hidden; height:2.1mm; background:#141b21; }
 
         /* ================= TITLE + CHALLAN META ================= */
@@ -39,7 +39,7 @@
         .doc-meta .line { width:58%; border-bottom:1px solid #333; padding-left:1.5mm; white-space:normal; }
 
         /* ================= DELIVER TO BOX (same pattern as Buyer/Ship To) ================= */
-        .party-box { width:100%; border:1px solid #8ea37d; border-radius:2.6mm; border-collapse:separate !important; border-spacing:0 !important; overflow:hidden !important; background:#fff; margin-bottom:2.5mm; }
+        .party-box { width:100%; border:1px solid #c02026; border-radius:2.6mm; border-collapse:separate !important; border-spacing:0 !important; overflow:hidden !important; background:#fff; margin-bottom:2.5mm; }
         .party-box > tbody > tr > td { padding:0 !important; border:0 !important; vertical-align:top; }
         .party-tag-bar { height:7.5mm; line-height:7.5mm; padding:0 4.5mm; color:#fff; background:#c02026; font-size:12px; font-weight:800; letter-spacing:.3px; white-space:nowrap; overflow:hidden; }
         .party-fields-wrap { padding:2mm 4mm 1.8mm 4mm !important; }
@@ -67,8 +67,10 @@
 }
 
         /* ================= ITEMS TABLE (green header, rounded) ================= */
-        .items-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid #71905e; border-radius:2.5mm; overflow:hidden; margin-bottom:2.5mm; }
-        .items-table th { height:7mm; padding:1mm; color:#fff; background:#36751b; border-right:1px solid rgba(255,255,255,.5); font-size:11.5px; line-height:1.25; font-weight:700; text-align:center; vertical-align:middle; }
+        .items-table { width:100%; border-collapse:separate; border-spacing:0; border:1px solid #c02026; border-radius:2.5mm;
+        overflow:hidden; margin-bottom:2.5mm; }
+        .items-table th { height:7mm; padding:1mm; color:#fff; background:#c02026; border-right:1px solid rgba(255,255,255,.5);
+        font-size:11.5px; line-height:1.25; font-weight:700; text-align:center; vertical-align:middle; }
         .items-table th:last-child, .items-table td:last-child { border-right:0; }
         .items-table td { border-top:1px solid #c7cdc4; border-right:1px solid #c7cdc4; padding:1.6mm; font-size:10.6px; vertical-align:top; text-align:center; }
         .items-table td.desc-cell { text-align:left; }
@@ -80,7 +82,7 @@
         .footer-box td { padding:3mm 4mm; vertical-align:top; }
         .fb-left { width:58%; font-size:10.3px; line-height:1.55; color:#333; }
         .fb-right { width:42%; border-left:1px solid #cfd8c8; text-align:center; vertical-align:middle; }
-        .company-sign { font-size:11px; margin-bottom:1mm; } .company-sign strong { color:#2f6d16; }
+        .company-sign { font-size:11px; margin-bottom:1mm; } .company-sign strong { color:#c02026; }
         .signature-image-wrap { width:38mm; height:11mm; margin:0 auto 0.5mm; text-align:center; overflow:hidden; }
         .signature-image { display:block; width:100%; height:100%; object-fit:contain; object-position:center bottom; }
         .sign-line { width:38mm; margin:0 auto 1mm; border-top:1px solid #222; } .authorized { font-size:10.5px; }

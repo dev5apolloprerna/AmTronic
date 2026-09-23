@@ -47,7 +47,7 @@ class SalesExecutiveApiTest extends TestCase
             'customer_id' => $customer->id, 'quotation_date' => '2026-09-21', 'gst_applicable' => true,
             'shipping_address' => 'Main Road', 'shipping_state' => 'Gujarat', 'shipping_city' => 'Surat',
             'shipping_pincode' => '395001', 'items' => [[
-                'product_id' => $product->id, 'size_mtr' => 10, 'no_of_rolls' => 2, 'price_per_mtr' => 50,
+                'product_id' => $product->id, 'description' => 'Product Description', 'qty' => 2, 'rate' => 50,
             ]],
         ];
     }
@@ -107,6 +107,48 @@ class SalesExecutiveApiTest extends TestCase
         $this->withToken($otherToken)->postJson("/api/quotations/{$id}/show")->assertForbidden();
     }
 
+     public function test_create_endpoint_returns_json_instead_of_redirecting_to_web_login(): void
+    {
+        $this->postJson('/api/quotations', $this->quotationPayload())
+            ->assertUnauthorized()
+            ->assertHeader('content-type', 'application/json')
+            ->assertJson(['message' => 'Unauthenticated.']);
+    }
+
+    public function test_employee_can_create_a_quotation_with_multiple_products(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+        $payload = $this->quotationPayload();
+        $secondProduct = Product::create([
+            'name' => 'Second Roll', 'code' => 'ROLL-2', 'unit' => 'MTR',
+            'hsn_code' => '5678', 'status' => 'active',
+        ]);
+        $payload['items'][] = [
+            'product_id' => $secondProduct->id,
+            'description' => 'Second product line',
+            'qty' => 3,
+            'rate' => 100,
+        ];
+
+        $this->withToken($token)->postJson('/api/quotations/create', $payload)
+            ->assertCreated()
+            ->assertJsonCount(2, 'data.quotation.items')
+            ->assertJsonPath('data.quotation.items.0.product_name', 'Roll')
+            ->assertJsonPath('data.quotation.items.0.description', 'Standard roll')
+            ->assertJsonPath('data.quotation.items.0.qty', 2)
+            ->assertJsonPath('data.quotation.items.0.rate', 50)
+            ->assertJsonPath('data.quotation.items.0.amount', 100)
+            ->assertJsonPath('data.quotation.items.1.product_name', 'Second Roll')
+            ->assertJsonPath('data.quotation.items.1.amount', 300)
+            ->assertJsonMissingPath('data.quotation.items.0.size_mtr')
+            ->assertJsonMissingPath('data.quotation.items.0.despatch_to')
+            ->assertJsonMissingPath('data.quotation.items.0.no_of_rolls')
+            ->assertJsonMissingPath('data.quotation.items.0.price_per_mtr')
+            ->assertJsonPath('data.quotation.sub_total', '400.00')
+            ->assertJsonPath('data.total_amount', 472);
+    }
+
     public function test_approved_quotation_cannot_be_edited_in_api_or_admin(): void
     {
         $user = $this->salesExecutive();
@@ -135,10 +177,9 @@ class SalesExecutiveApiTest extends TestCase
 
         $added = $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items", [
             'product_id' => $productId,
-            'despatch_to' => 'Warehouse',
-            'size_mtr' => 5,
-            'no_of_rolls' => 3,
-            'price_per_mtr' => 100,
+            'description' => 'Warehouse stock',
+            'qty' => 3,
+            'rate' => 100,
         ])->assertCreated()
             ->assertJsonPath('data.quotation.sub_total', '400.00')
             ->assertJsonPath('data.total_amount', 472);
@@ -148,13 +189,13 @@ class SalesExecutiveApiTest extends TestCase
         $this->withToken($token)->postJson("/api/quotations/{$quotationId}/show")
             ->assertOk()
             ->assertJsonPath('data.quotation.items.1.id', $itemId)
-            ->assertJsonPath('data.quotation.items.1.amount', '300.00');
+            ->assertJsonPath('data.quotation.items.1.amount', 300);
 
         $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/update", [
             'product_id' => $productId,
-            'size_mtr' => 5,
-            'no_of_rolls' => 4,
-            'price_per_mtr' => 100,
+            'description' => 'Updated stock',
+            'qty' => 4,
+            'rate' => 100,
         ])->assertOk()
             ->assertJsonPath('data.quotation.sub_total', '500.00')
             ->assertJsonPath('data.total_amount', 590);
