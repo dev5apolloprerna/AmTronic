@@ -56,14 +56,13 @@
                             <div class="row" id="summaryNetAmountRow" style="display:none;"><span>Total Amount</span><span>&#8377;<span id="summaryNetAmount">0.00</span></span></div>
                             <div class="row">
                                 <span>
-                                    GST (18%)
+                                    GST (18%) *
                                     <label style="font-weight:400; margin-left:14px;">
-                                        <input type="checkbox" id="gst_yes" {{ old('gst_applicable') ? 'checked' : '' }}> Yes
+                                        <input type="radio" name="gst_applicable" id="gst_yes" value="1" {{ old('gst_applicable') === '1' ? 'checked' : '' }} required> Yes
                                     </label>
                                     <label style="font-weight:400; margin-left:10px;">
-                                        <input type="checkbox" id="gst_no" {{ old('gst_applicable') ? '' : 'checked' }}> No
+                                        <input type="radio" name="gst_applicable" id="gst_no" value="0" {{ old('gst_applicable') === '0' ? 'checked' : '' }} required> No
                                     </label>
-                                    <input type="hidden" name="gst_applicable" id="gst_applicable_hidden" value="{{ old('gst_applicable') ? '1' : '0' }}">
                                 </span>
                                 <span id="summaryGstRow" style="display:none;">&#8377;<span id="summaryGstAmount">0.00</span></span>
                             </div>

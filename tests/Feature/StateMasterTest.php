@@ -100,7 +100,7 @@ class StateMasterTest extends TestCase
 
         $payload = fn (string $state) => [
             'customer_id' => $customer->id,
-            'quotation_date' => '2026-09-21',
+            'gst_applicable' => false,
             'shipping_address' => '1 Dock Road',
             'shipping_state' => $state,
             'shipping_city' => 'Surat',

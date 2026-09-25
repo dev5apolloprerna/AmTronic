@@ -53,10 +53,10 @@
                     @forelse($recentQuotations as $q)
                         <tr onclick="window.location='{{ route('quotations.show', $q) }}'" style="cursor:pointer;">
                             <td>{{ $q->quotation_number }}</td>
-                            <td>{{ $q->customer->name }}</td>
-                            <td>{{ $q->quotation_date->format('d M Y') }}</td>
+                            <td>{{ $q->customer?->name ?? '-' }}</td>
+                            <td>{{ $q->quotation_date?->format('d M Y') ?? '-' }}</td>
                             <td><span class="pill pill-{{ $q->displayStatusClass() }}">{{ $q->displayStatus() }}</span></td>
-                            <td>{{ $q->user->name }}</td>
+                            <td>{{ $q->user?->name ?? '-' }}</td>
                             <td class="text-right">&#8377;{{ number_format($q->total_amount, 2) }}</td>
                         </tr>
                     @empty
