@@ -82,19 +82,12 @@ function initQuotationBuilder() {
   var customerSelect = document.getElementById('customer_id');
   var gstYesCheckbox = document.getElementById('gst_yes');
   var gstNoCheckbox = document.getElementById('gst_no');
-  var gstHiddenInput = document.getElementById('gst_applicable_hidden');
   var discountInput = document.getElementById('discount_amount');
   var discountErrorHint = document.getElementById('discountErrorHint');
   var rowIndex = parseInt(container.getAttribute('data-next-index'), 10) || 0;
 
   function isGstApplicable() {
-    return !!(gstHiddenInput && gstHiddenInput.value === '1');
-  }
-
-  function setGstApplicable(applicable) {
-    if (gstYesCheckbox) gstYesCheckbox.checked = applicable;
-    if (gstNoCheckbox) gstNoCheckbox.checked = !applicable;
-    if (gstHiddenInput) gstHiddenInput.value = applicable ? '1' : '0';
+        return !!(gstYesCheckbox && gstYesCheckbox.checked);
   }
 
   function bindRow(row) {
@@ -233,13 +226,13 @@ function initQuotationBuilder() {
 
   if (gstYesCheckbox) {
     gstYesCheckbox.addEventListener('change', function () {
-      setGstApplicable(gstYesCheckbox.checked);
+      // setGstApplicable(gstYesCheckbox.checked);
       recalcTotals();
     });
   }
   if (gstNoCheckbox) {
     gstNoCheckbox.addEventListener('change', function () {
-      setGstApplicable(!gstNoCheckbox.checked);
+      // setGstApplicable(!gstNoCheckbox.checked);
       recalcTotals();
     });
   }

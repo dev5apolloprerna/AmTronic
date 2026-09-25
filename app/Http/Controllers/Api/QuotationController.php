@@ -382,7 +382,7 @@ class QuotationController extends Controller
     {
         $data = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'], 'quotation_date' => ['required', 'date'],
-            'gst_applicable' => ['nullable', 'boolean'], 'discount_amount' => ['nullable', 'numeric', 'min:0'],
+            'gst_applicable' => ['required', 'boolean'], 'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'admin_charges' => ['nullable', 'numeric', 'min:0'], 'material_handling_charges' => ['nullable', 'numeric', 'min:0'],
             'shipping_address_different' => ['nullable', 'boolean'], 'shipping_address' => ['required', 'string', 'max:2000'],
             'shipping_address_line_2' => ['nullable', 'string', 'max:2000'],

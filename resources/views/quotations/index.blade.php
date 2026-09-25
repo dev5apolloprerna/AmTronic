@@ -69,10 +69,10 @@
                         @forelse($quotations as $q)
                             <tr>
                                 <td>{{ $q->quotation_number }}</td>
-                                <td>{{ $q->customer->name }}</td>
-                                <td>{{ $q->quotation_date->format('d M Y') }}</td>
+                                <td>{{ $q->customer?->name ?? '-' }}</td>
+                                <td>{{ $q->quotation_date?->format('d M Y') ?? '-' }}</td>
                                 <td><span class="pill pill-{{ $q->displayStatusClass() }}">{{ $q->displayStatus() }}</span></td>
-                                <td>{{ $q->user->name }}</td>
+                                <td>{{ $q->user?->name ?? '-' }}</td>
                                 <td class="text-right">&#8377;{{ number_format($q->total_amount, 2) }}</td>
                                 <td>
                                     <a href="{{ route('quotations.show', $q) }}" class="btn btn-secondary btn-sm">View</a>

@@ -47,6 +47,7 @@ class QuotationItemsTest extends TestCase
         return array_merge([
             'customer_id' => $this->customer->id,
             'quotation_date' => '2026-09-21',
+            'gst_applicable' => false,
             'shipping_address' => '1 Dock Road',
             'shipping_state' => 'Gujarat',
             'shipping_city' => 'Surat',
@@ -119,6 +120,21 @@ class QuotationItemsTest extends TestCase
         $this->assertStringNotContainsString('Size (Mtr)', $html);
         $this->assertStringNotContainsString('# of Rolls', $html);
         $this->assertStringNotContainsString('js-rolls', $html);
+    }
+        public function test_web_quotation_requires_an_explicit_gst_choice(): void
+    {
+        $html = $this->actingAs($this->admin)->get(route('quotations.create'))->assertOk()->getContent();
+
+        $this->assertStringContainsString('name="gst_applicable"', $html);
+        $this->assertStringContainsString('id="gst_yes" value="1"', $html);
+        $this->assertStringContainsString('id="gst_no" value="0"', $html);
+        $this->assertStringNotContainsString('id="gst_applicable_hidden"', $html);
+
+        $payload = $this->payload([$this->line($this->productKey())]);
+        unset($payload['gst_applicable']);
+
+        $this->actingAs($this->admin)->post(route('quotations.store'), $payload)
+            ->assertSessionHasErrors('gst_applicable');
     }
 
     public function test_master_descriptions_are_offered_to_prefill_the_description_box(): void

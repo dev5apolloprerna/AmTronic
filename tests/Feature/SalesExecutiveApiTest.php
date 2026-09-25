@@ -168,6 +168,18 @@ class SalesExecutiveApiTest extends TestCase
         $otherToken = $this->token($other);
         $this->withToken($otherToken)->postJson("/api/quotations/{$id}/show")->assertForbidden();
     }
+     public function test_api_requires_an_explicit_gst_choice(): void
+    {
+        $token = $this->token($this->salesExecutive());
+        $payload = $this->quotationPayload();
+        unset($payload['gst_applicable']);
+
+        $this->withToken($token)->postJson('/api/quotations/create', $payload)
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors('gst_applicable');
+    }
+
+
         public function test_dedicated_quotation_lists_return_pending_approved_and_rejected_records(): void
     {
         $user = $this->salesExecutive();

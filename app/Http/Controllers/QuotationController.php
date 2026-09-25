@@ -93,7 +93,6 @@ class QuotationController extends Controller
     public function store(Request $request)
     {
         $data = $this->validateData($request);
-dd('skgjlgksg');
         $subTotal = $this->calculateItemsSubTotal($data['items']);
         if ((float) ($data['discount_amount'] ?? 0) > $subTotal) {
             return back()->withErrors([
@@ -108,7 +107,7 @@ dd('skgjlgksg');
                 'user_id' => Auth::id(),
                 'quotation_date' => $data['quotation_date'],
                 'status' => 'draft',
-                'gst_applicable' => $data['gst_applicable'] ?? false,
+                'gst_applicable' => $data['gst_applicable'],
                 'discount_amount' => $data['discount_amount'] ?? 0,
                 'admin_charges' => $data['admin_charges'] ?? 0,
                 'material_handling_charges' => $data['material_handling_charges'] ?? 0,
@@ -217,7 +216,7 @@ dd('skgjlgksg');
             $quotation->update([
                 'customer_id' => $data['customer_id'],
                 'quotation_date' => $data['quotation_date'],
-                'gst_applicable' => $data['gst_applicable'] ?? false,
+                'gst_applicable' => $data['gst_applicable'],
                 'discount_amount' => $data['discount_amount'] ?? 0,
                 'admin_charges' => $data['admin_charges'] ?? 0,
                 'material_handling_charges' => $data['material_handling_charges'] ?? 0,
@@ -503,7 +502,7 @@ dd('skgjlgksg');
         return $request->validate([
             'customer_id' => ['required', 'exists:customers,id'],
             'quotation_date' => ['required', 'date'],
-            'gst_applicable' => ['nullable', 'boolean'],
+            'gst_applicable' => ['required', 'boolean'],
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'admin_charges' => ['nullable', 'numeric', 'min:0'],
             'material_handling_charges' => ['nullable', 'numeric', 'min:0'],
