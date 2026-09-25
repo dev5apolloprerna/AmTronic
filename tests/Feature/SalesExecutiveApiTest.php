@@ -335,7 +335,8 @@ class SalesExecutiveApiTest extends TestCase
         $quotationId = $this->withToken($token)->postJson('/api/quotations', $payload)->json('data.id');
         $productId = $payload['items'][0]['product_id'];
 
-        $added = $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items", [
+        $added = $this->withToken($token)->postJson('/api/quotations/items', [
+            'quotation_id' => $quotationId,
             'items' => [[
                 'product_id' => $productId,
                 'description' => 'Warehouse stock',
@@ -353,7 +354,9 @@ class SalesExecutiveApiTest extends TestCase
             ->assertJsonPath('data.quotation.items.1.id', $itemId)
             ->assertJsonPath('data.quotation.items.1.amount', 300);
 
-        $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/update", [
+        $this->withToken($token)->postJson('/api/quotations/items/update', [
+            'quotation_id' => $quotationId,
+            'item_id' => $itemId,
             'product_id' => $productId,
             'description' => 'Updated stock',
             'qty' => 4,
@@ -362,7 +365,10 @@ class SalesExecutiveApiTest extends TestCase
             ->assertJsonPath('data.quotation.sub_total', '500.00')
             ->assertJsonPath('data.total_amount', 590);
 
-        $this->withToken($token)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/delete")
+        $this->withToken($token)->postJson('/api/quotations/items/delete', [
+            'quotation_id' => $quotationId,
+            'item_id' => $itemId,
+        ])
             ->assertOk()
             ->assertJsonCount(1, 'data.quotation.items')
             ->assertJsonPath('data.quotation.sub_total', '100.00')
@@ -379,11 +385,27 @@ class SalesExecutiveApiTest extends TestCase
         $itemId = $created->json('data.quotation.items.0.id');
 
         $otherToken = $this->token($this->salesExecutive());
-        $this->withToken($otherToken)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/delete")
+        $this->withToken($otherToken)->postJson('/api/quotations/items/delete', [
+            'quotation_id' => $quotationId,
+            'item_id' => $itemId,
+        ])
             ->assertForbidden();
 
         $this->withToken($ownerToken)->postJson("/api/quotations/{$quotationId}/mark-sent")->assertOk();
-        $this->withToken($ownerToken)->postJson("/api/quotations/{$quotationId}/items/{$itemId}/delete")
+        $this->withToken($ownerToken)->postJson('/api/quotations/items/delete', [
+            'quotation_id' => $quotationId,
+            'item_id' => $itemId,
+        ])
             ->assertStatus(409);
     }
+     public function test_item_delete_validation_returns_json_without_an_accept_header(): void
+    {
+        $token = $this->token($this->salesExecutive());
+
+        $this->withHeader('Authorization', 'Bearer '.$token)
+            ->post('/api/quotations/items/delete', [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['quotation_id', 'item_id']);
+    }
+
 }
