@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -18,5 +19,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // API clients such as Postman often send Accept: */*. Always render API
+        // validation/authentication failures as JSON instead of redirecting to
+        // the web login page and returning misleading HTML with a 200 status.
+        $exceptions->shouldRenderJsonWhen(
+            fn (Request $request, \Throwable $exception) => $request->is('api/*') || $request->expectsJson(),
+        );
     })->create();

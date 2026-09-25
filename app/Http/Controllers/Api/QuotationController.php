@@ -174,11 +174,12 @@ class QuotationController extends Controller
      * This intentionally does not wait for the complete quotation update, so
      * an interrupted mobile session can be restored with show().
      */
-    public function storeItem(Request $request, ?Quotation $quotation = null)
+    public function storeItem(Request $request)
     {
         $data = $this->validatedStoreItems($request);
+        $quotation = null;
 
-        if (! $quotation && filled($data['quotation_id'] ?? null)) {
+        if (filled($data['quotation_id'] ?? null)) {
             $quotation = Quotation::findOrFail($data['quotation_id']);
         }
 
@@ -215,8 +216,15 @@ class QuotationController extends Controller
         ], 201);
     }
 
-    public function updateItem(Request $request, Quotation $quotation, QuotationItem $item)
+    public function updateItem(Request $request)
     {
+         $ids = $request->validate([
+            'quotation_id' => ['required', 'integer', 'exists:quotations,id'],
+            'item_id' => ['required', 'integer', 'exists:quotation_items,id'],
+        ]);
+        $quotation = Quotation::findOrFail($ids['quotation_id']);
+        $item = QuotationItem::findOrFail($ids['item_id']);
+
         $this->ownedItem($request, $quotation, $item);
         if (! $quotation->isEditable()) {
             return $this->itemNotEditableResponse();
@@ -235,8 +243,15 @@ class QuotationController extends Controller
         ]);
     }
 
-    public function destroyItem(Request $request, Quotation $quotation, QuotationItem $item)
+    public function destroyItem(Request $request)
     {
+        $ids = $request->validate([
+            'quotation_id' => ['required', 'integer', 'exists:quotations,id'],
+            'item_id' => ['required', 'integer', 'exists:quotation_items,id'],
+        ]);
+        $quotation = Quotation::findOrFail($ids['quotation_id']);
+        $item = QuotationItem::findOrFail($ids['item_id']);
+
         $this->ownedItem($request, $quotation, $item);
         if (! $quotation->isEditable()) {
             return $this->itemNotEditableResponse();
