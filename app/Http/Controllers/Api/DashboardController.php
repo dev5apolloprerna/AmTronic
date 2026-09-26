@@ -21,8 +21,7 @@ class DashboardController extends Controller
                     'approved' => (clone $query)->where('status', 'approved')->count(),
                     'rejected' => (clone $query)->where('status', 'rejected')->count(),
                 ],
-                'recent_quotations' => (clone $query)->with(['customer', 'invoice'])->latest()->limit(10)->get()
-                    ->map(fn (Quotation $quotation) => QuotationController::summary($quotation)),
+                'recent_quotations' => (clone $query)->with(['customer', 'invoice.deliveryChallan'])->latest()->limit(10)->get()->map(fn (Quotation $quotation) => QuotationController::summary($quotation)),
             ],
         ]);
     }

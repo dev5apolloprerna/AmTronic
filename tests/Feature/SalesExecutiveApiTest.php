@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Customer;
 use App\Models\Designation;
 use App\Models\NumberSetting;
+use App\Models\DeliveryChallan;
+use App\Models\Invoice;
 use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\State;
@@ -168,6 +170,66 @@ class SalesExecutiveApiTest extends TestCase
         $otherToken = $this->token($other);
         $this->withToken($otherToken)->postJson("/api/quotations/{$id}/show")->assertForbidden();
     }
+    public function test_quotation_responses_include_document_statuses_and_api_pdf_links(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+        $quotationId = $this->withToken($token)
+            ->postJson('/api/quotations/create', $this->quotationPayload())
+            ->json('data.id');
+        $quotation = Quotation::findOrFail($quotationId);
+
+        $invoice = Invoice::create([
+            'invoice_number' => 'INV-API-1',
+            'quotation_id' => $quotation->id,
+            'customer_id' => $quotation->customer_id,
+            'invoice_date' => '2026-09-22',
+            'sub_total' => $quotation->sub_total,
+            'gst_amount' => $quotation->gst_amount,
+            'total_amount' => $quotation->total_amount,
+            'document_status' => 'invoice_approved',
+        ]);
+        $challan = DeliveryChallan::create([
+            'challan_number' => 'DC-API-1',
+            'invoice_id' => $invoice->id,
+            'challan_date' => '2026-09-23',
+        ]);
+
+        $this->withToken($token)->postJson("/api/quotations/{$quotation->id}/show")
+            ->assertOk()
+            ->assertJsonPath('data.documents.quotation.status', 'Invoice Sent')
+            ->assertJsonPath('data.documents.quotation.pdf_url', route('api.quotations.pdf', $quotation))
+            ->assertJsonPath('data.documents.invoice.status', 'Invoice Sent')
+            ->assertJsonPath('data.documents.invoice.pdf_url', route('api.invoices.pdf', $invoice))
+            ->assertJsonPath('data.documents.delivery_challan.status', 'Delivery Challan Ready')
+            ->assertJsonPath('data.documents.delivery_challan.pdf_url', route('api.delivery-challans.pdf', $challan));
+
+        foreach ([
+            route('api.quotations.pdf', $quotation),
+            route('api.invoices.pdf', $invoice),
+            route('api.delivery-challans.pdf', $challan),
+        ] as $url) {
+            $this->withToken($token)->get($url)
+                ->assertOk()
+                ->assertHeader('content-type', 'application/pdf');
+        }
+    }
+
+    public function test_api_pdf_links_require_the_owner_bearer_token(): void
+    {
+        $owner = $this->salesExecutive();
+        $quotationId = $this->withToken($this->token($owner))
+            ->postJson('/api/quotations/create', $this->quotationPayload())
+            ->json('data.id');
+        $url = route('api.quotations.pdf', $quotationId);
+
+        $this->getJson($url)->assertUnauthorized();
+        $this->withToken($this->token($this->salesExecutive()))
+            ->getJson($url)
+            ->assertForbidden()
+            ->assertJsonPath('message', 'You do not have permission to access this document.');
+    }
+    
      public function test_api_requires_an_explicit_gst_choice(): void
     {
         $token = $this->token($this->salesExecutive());

@@ -24,7 +24,7 @@ class QuotationController extends Controller
 
         $status = $request->input('status');
         $search = $request->input('search');
-        $quotations = Quotation::with(['customer', 'invoice'])
+        $quotations = Quotation::with(['customer', 'invoice.deliveryChallan'])
             ->where('user_id', $request->user()->id)
             ->where('is_temporary', false)
             ->when($search, fn ($q) => $q->where(fn ($qq) => $qq
@@ -60,7 +60,7 @@ class QuotationController extends Controller
     {
         $request->validate(['search' => ['nullable', 'string', 'max:255']]);
         $search = $request->input('search');
-        $quotations = Quotation::with(['customer', 'invoice'])
+        $quotations = Quotation::with(['customer', 'invoice.deliveryChallan'])
             ->where('user_id', $request->user()->id)
             ->where('is_temporary', false)
             ->when($status === 'pending', fn ($query) => $query->where('status', 'draft'))
@@ -301,17 +301,41 @@ class QuotationController extends Controller
 
     public static function summary(Quotation $quotation): array
     {
+        $invoice = $quotation->invoice;
+        $deliveryChallan = $invoice?->deliveryChallan;
+
         return [
             'id' => $quotation->id, 'quotation_number' => $quotation->quotation_number,
             'quotation_date' => $quotation->quotation_date?->toDateString(), 'customer' => $quotation->customer,
             'status' => $quotation->displayStatus(), 'status_code' => $quotation->displayStatusClass(),
             'total_amount' => (float) $quotation->total_amount, 'editable' => $quotation->isEditable(),
+            'documents' => [
+                'quotation' => [
+                    'status' => $quotation->displayStatus(),
+                    'status_code' => $quotation->displayStatusClass(),
+                    'pdf_url' => route('api.quotations.pdf', $quotation),
+                ],
+                'invoice' => $invoice ? [
+                    'id' => $invoice->id,
+                    'number' => $invoice->invoice_number,
+                    'status' => $invoice->document_status === 'invoice_approved' ? 'Invoice Sent' : 'Invoice Ready',
+                    'status_code' => $invoice->document_status,
+                    'pdf_url' => route('api.invoices.pdf', $invoice),
+                ] : null,
+                'delivery_challan' => $deliveryChallan ? [
+                    'id' => $deliveryChallan->id,
+                    'number' => $deliveryChallan->challan_number,
+                    'status' => 'Delivery Challan Ready',
+                    'status_code' => 'delivery_challan_ready',
+                    'pdf_url' => route('api.delivery-challans.pdf', $deliveryChallan),
+                ] : null,
+            ],
         ];
     }
 
     private function detail(Quotation $quotation): array
     {
-        $quotation->load(['customer', 'items.product', 'invoice']);
+        $quotation->load(['customer', 'items.product', 'invoice.deliveryChallan']);
         $quotationData = $quotation->toArray();
         $quotationData['items'] = $quotation->items->map(fn (QuotationItem $item) => [
             'id' => $item->id,
