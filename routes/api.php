@@ -1,6 +1,7 @@
 <?php
     use App\Http\Controllers\Api\AuthController;
     use App\Http\Controllers\Api\DashboardController;
+    use App\Http\Controllers\Api\DocumentController;
     use App\Http\Controllers\Api\QuotationController;
     use Illuminate\Support\Facades\Route;
  
@@ -38,5 +39,14 @@
  
      Route::post('quotations/{quotation}/mark-sent', [QuotationController::class, 'markSent'])->whereNumber('quotation');
     Route::post('quotations/{quotation}/approve', [QuotationController::class, 'approve'])->whereNumber('quotation');
-    Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->whereNumber('quotation');
+   Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->whereNumber('quotation');
+
+    // These PDFs use the same Blade templates as the web application. API
+    // clients must include their bearer token when following the returned URL.
+    Route::get('quotations/{quotation}/pdf', [DocumentController::class, 'quotation'])
+        ->whereNumber('quotation')->name('api.quotations.pdf');
+    Route::get('invoices/{invoice}/pdf', [DocumentController::class, 'invoice'])
+        ->whereNumber('invoice')->name('api.invoices.pdf');
+    Route::get('delivery-challans/{deliveryChallan}/pdf', [DocumentController::class, 'deliveryChallan'])
+        ->whereNumber('deliveryChallan')->name('api.delivery-challans.pdf');
  });
