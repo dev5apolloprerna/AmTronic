@@ -11,6 +11,7 @@ use App\Models\QuotationItem;
 use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 
 class QuotationController extends Controller
@@ -313,25 +314,31 @@ class QuotationController extends Controller
                 'quotation' => [
                     'status' => $quotation->displayStatus(),
                     'status_code' => $quotation->displayStatusClass(),
-                    'pdf_url' => route('api.quotations.pdf', $quotation),
+                    'pdf_url' => self::documentUrl('api.quotations.pdf', ['quotation' => $quotation], $quotation),
                 ],
                 'invoice' => $invoice ? [
                     'id' => $invoice->id,
                     'number' => $invoice->invoice_number,
                     'status' => $invoice->document_status === 'invoice_approved' ? 'Invoice Sent' : 'Invoice Ready',
                     'status_code' => $invoice->document_status,
-                    'pdf_url' => route('api.invoices.pdf', $invoice),
+                    'pdf_url' => self::documentUrl('api.invoices.pdf', ['invoice' => $invoice], $quotation),
                 ] : null,
                 'delivery_challan' => $deliveryChallan ? [
                     'id' => $deliveryChallan->id,
                     'number' => $deliveryChallan->challan_number,
                     'status' => 'Delivery Challan Ready',
                     'status_code' => 'delivery_challan_ready',
-                    'pdf_url' => route('api.delivery-challans.pdf', $deliveryChallan),
+                    'pdf_url' => self::documentUrl('api.delivery-challans.pdf', ['deliveryChallan' => $deliveryChallan], $quotation),
                 ] : null,
             ],
         ];
     }
+
+   private static function documentUrl(string $route, array $parameters, Quotation $quotation): string
+    {
+        return URL::signedRoute($route, $parameters + ['user' => $quotation->user_id]);
+    }
+
 
     private function detail(Quotation $quotation): array
     {

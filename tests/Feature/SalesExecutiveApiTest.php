@@ -195,24 +195,30 @@ class SalesExecutiveApiTest extends TestCase
             'challan_date' => '2026-09-23',
         ]);
 
-        $this->withToken($token)->postJson("/api/quotations/{$quotation->id}/show")
-            ->assertOk()
+        $response = $this->withToken($token)->postJson("/api/quotations/{$quotation->id}/show");
+
+        $response->assertOk()
             ->assertJsonPath('data.documents.quotation.status', 'Invoice Sent')
-            ->assertJsonPath('data.documents.quotation.pdf_url', route('api.quotations.pdf', $quotation))
             ->assertJsonPath('data.documents.invoice.status', 'Invoice Sent')
-            ->assertJsonPath('data.documents.invoice.pdf_url', route('api.invoices.pdf', $invoice))
             ->assertJsonPath('data.documents.delivery_challan.status', 'Delivery Challan Ready')
-            ->assertJsonPath('data.documents.delivery_challan.pdf_url', route('api.delivery-challans.pdf', $challan));
+            ->assertJsonStructure(['data' => ['documents' => [
+                'quotation' => ['pdf_url'],
+                'invoice' => ['pdf_url'],
+                'delivery_challan' => ['pdf_url'],
+            ]]]);
 
         foreach ([
-            route('api.quotations.pdf', $quotation),
-            route('api.invoices.pdf', $invoice),
-            route('api.delivery-challans.pdf', $challan),
+            $response->json('data.documents.quotation.pdf_url'),
+            $response->json('data.documents.invoice.pdf_url'),
+            $response->json('data.documents.delivery_challan.pdf_url'),
+
         ] as $url) {
-            $this->withToken($token)->get($url)
+            $this->get($url)
                 ->assertOk()
                 ->assertHeader('content-type', 'application/pdf');
         }
+        $tamperedUrl = str_replace('user='.$user->id, 'user='.($user->id + 1), $response->json('data.documents.quotation.pdf_url'));
+        $this->get($tamperedUrl)->assertUnauthorized();
     }
 
     public function test_api_pdf_links_require_the_owner_bearer_token(): void

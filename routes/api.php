@@ -41,8 +41,9 @@
     Route::post('quotations/{quotation}/approve', [QuotationController::class, 'approve'])->whereNumber('quotation');
    Route::post('quotations/{quotation}/reject', [QuotationController::class, 'reject'])->whereNumber('quotation');
 
-    // These PDFs use the same Blade templates as the web application. API
-    // clients must include their bearer token when following the returned URL.
+    // These PDFs use the same Blade templates as the web application. The API
+    // returns signed links so browsers can open them without forwarding a bearer
+    // token; authenticated clients may continue to call these routes directly.
     Route::get('quotations/{quotation}/pdf', [DocumentController::class, 'quotation'])
         ->whereNumber('quotation')->name('api.quotations.pdf');
     Route::get('invoices/{invoice}/pdf', [DocumentController::class, 'invoice'])
