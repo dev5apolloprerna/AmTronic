@@ -166,21 +166,19 @@ class QuotationController extends Controller
         /** Persist products without creating a quotation master until final submit. */
     public function storeItem(Request $request)
     {
-        $data = $this->validatedStoreItems($request);
-        $quotationId = (int) ($data['quotation_id'] ?? 0);
+        $data = $this->validatedItem($request, true);
+        $quotationId = (int) $data['quotation_id'];
 
         if ($quotationId === 0) {
-            $items = DB::transaction(fn () => collect($data['items'])->map(
-                fn (array $item) => QuotationItem::create([
-                    'quotation_id' => 0,
-                    'user_id' => $request->user()->id,
-                ] + $this->itemAttributes($item)),
-            ));
+            $item = QuotationItem::create([
+                'quotation_id' => 0,
+                'user_id' => $request->user()->id,
+            ] + $this->itemAttributes($data));
 
             return response()->json([
-                'message' => 'Products saved before quotation completion.',
+                'message' => 'Product saved before quotation completion.',
                 'quotation_id' => 0,
-                'item_ids' => $items->pluck('id')->all(),
+                'item_id' => $item->id,
                 'data' => $this->draftDetail($request),
             ], 201);
         }
@@ -192,18 +190,17 @@ class QuotationController extends Controller
             return $this->itemNotEditableResponse();
         }
 
-        $items = DB::transaction(function () use ($quotation, $data) {
-            $items = collect($data['items'])->map(
-                fn (array $item) => $quotation->items()->create($this->itemAttributes($item)),
-            );
+        $item = DB::transaction(function () use ($quotation, $data) {
+            $item = $quotation->items()->create($this->itemAttributes($data));
+
             $quotation->recalculateTotals();
-            return $items;
+            return $item;
         });
 
         return response()->json([
-            'message' => 'Quotation products added successfully.',
+            'message' => 'Quotation product added successfully.',
             'quotation_id' => $quotation->id,
-            'item_ids' => $items->pluck('id')->all(),
+            'item_id' => $item->id,
             'data' => $this->detail($quotation),
         ], 201);
     }
@@ -392,27 +389,14 @@ class QuotationController extends Controller
         return response()->json(['message' => 'Products on sent, approved, or rejected quotations cannot be changed.'], 409);
     }
 
-    private function validatedItem(Request $request): array
+    private function validatedItem(Request $request, bool $quotationIdRequired = false): array
     {
         return $request->validate([
             'product_id' => ['required', Rule::exists('products', 'id')->where('status', 'active')],
             'description' => ['nullable', 'string', 'max:1000'],
             'qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
-            'quotation_id' => ['nullable', 'integer', 'min:0'],
-
-        ]);
-    }
-
-    private function validatedStoreItems(Request $request): array
-    {
-        return $request->validate([
-            'quotation_id' => ['nullable', 'integer', 'min:0'],
-            'items' => ['required', 'array', 'min:1', 'max:100'],
-            'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('status', 'active')],
-            'items.*.description' => ['nullable', 'string', 'max:1000'],
-            'items.*.qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
-            'items.*.rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
+            'quotation_id' => [$quotationIdRequired ? 'required' : 'nullable', 'integer', 'min:0'],
         ]);
     }
 

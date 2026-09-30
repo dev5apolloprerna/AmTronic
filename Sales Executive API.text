@@ -328,17 +328,10 @@ approved or rejected.
 
 ### Products before saving a quotation
 
-Use `POST /api/quotations/items` when no quotation ID exists yet. The first call
-creates a temporary row in the normal `quotations` table for the authenticated
-employee, adds the product to `quotation_items`, and returns `quotation_id`.
-For every further product, call the **same URL** and include that `quotation_id`
-in the request body. The same ID can be restored with
-`POST /api/quotations/{quotation}/show`, even after the app restarts.
-
-When the user saves the quotation, send that `quotation_id` to
-`POST /api/quotations` or `POST /api/quotations/create` with all header fields
-and omit `items`. The API completes the same quotation row, assigns its official
-quotation number, and keeps its existing products and calculated amounts.
+Use `POST /api/quotations/items` to add **one product per request**. The request
+uses flat product fields; an `items` array is not accepted. Always pass
+`quotation_id`: use `0` while the quotation has not been generated yet, or pass
+the ID of an existing editable quotation.
 
 #### Add the first product
 
@@ -347,11 +340,11 @@ POST /api/quotations/items
 Authorization: Bearer <token>
 ```
 
-Request (do not send `quotation_id` on the first call):
-
+Request before generating the quotation:
 ```json
 {
-  "product_id": 3,
+  "quotation_id": 0,
+  "product_id": 1,
   "description": "Clear glass product",
   "qty": 2.5,
   "rate": 80
@@ -363,24 +356,18 @@ Response (`201 Created`):
 ```json
 {
   "message": "Product saved before quotation completion.",
-  "quotation_id": 41,
+  "quotation_id": 0, 
   "item_id": 86,
   "data": {
-    "id": 41,
-    "quotation_number": null,
-    "quotation_date": null,
-    "status": "Quotation Created",
-    "status_code": "draft",
+    "id": 0,
     "total_amount": 200,
-    "editable": true,
     "quotation": {
-      "id": 41,
-      "user_id": 2,
-      "is_temporary": true,
+      "id": 0,
       "items": [
         {
           "id": 86,
-          "product_id": 3,
+          "quotation_id": 0,
+          "product_id": 1,
           "product_name": "Clear Glass",
           "description": "Clear glass product",
           "qty": 2.5,
@@ -393,13 +380,14 @@ Response (`201 Created`):
 }
 ```
 
-#### Add another product with the same API
+To add another product before generating the quotation, call the endpoint again
+with `quotation_id: 0` and that product's fields. Draft items are isolated by
+the authenticated employee. When the quotation header is ready, send
+`quotation_id: 0` to `POST /api/quotations/create`, omit `items`, and the API
+moves all of that employee's draft items onto the new quotation.
 
-Call the identical URL and send the returned `quotation_id`:
-
-```text
-POST /api/quotations/items
-```
+For an already generated quotation, pass its actual ID using the same single-item
+request shape:
 
 ```json
 {
@@ -411,34 +399,9 @@ POST /api/quotations/items
 }
 ```
 
-The response contains the same `quotation_id` and the complete updated product
-list. Save `quotation_id` in the app state; after reopening the app, restore the
-temporary quotation with `POST /api/quotations/41/show`.
-
-#### Complete the quotation
-
-```text
-POST /api/quotations
-```
-
-```json
-{
-  "quotation_id": 41,
-  "customer_id": 7,
-  "quotation_date": "2026-09-23",
-  "gst_applicable": true,
-  "shipping_address_different": false,
-  "shipping_address": "Main Road",
-  "shipping_state": "Gujarat",
-  "shipping_city": "Surat",
-  "shipping_pincode": "395001"
-}
-```
-
-Do not send `items` in this request. A successful `201 Created` response keeps
-`data.id` equal to `41`, changes `data.quotation.is_temporary` to `false`, assigns
-`quotation_number`, and retains the previously added product lines.
-
+The existing quotation must belong to the authenticated employee and remain
+editable. The response contains the new `item_id` and the quotation's complete
+updated item list and totals.
 
 ### Create quotation
 

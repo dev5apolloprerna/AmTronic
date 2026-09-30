@@ -3,6 +3,7 @@
     use App\Http\Controllers\Api\DashboardController;
     use App\Http\Controllers\Api\DocumentController;
     use App\Http\Controllers\Api\QuotationController;
+    use App\Http\Controllers\Api\ProductController;
     use Illuminate\Support\Facades\Route;
  
      Route::post('login', [AuthController::class, 'login']);
@@ -28,6 +29,7 @@
  
     // Keep these literal paths before the {quotation} routes. Otherwise Laravel
     // treats "items" as a quotation ID and returns a model-binding 404.
+     Route::post('products/list', [ProductController::class, 'index']);
      Route::post('quotations/items', [QuotationController::class, 'storeItem']);
      Route::post('quotations/items/update', [QuotationController::class, 'updateItem']);
      Route::post('quotations/items/delete', [QuotationController::class, 'destroyItem']);
