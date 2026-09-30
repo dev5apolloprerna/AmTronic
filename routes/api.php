@@ -19,7 +19,8 @@
      Route::post('profile/update', [AuthController::class, 'updateProfile']);
  
      Route::post('dashboard', DashboardController::class);
- 
+     Route::post('quotation-lookups', [QuotationController::class, 'lookups']);
+
      Route::post('quotations/list', [QuotationController::class, 'index']);
      Route::post('quotations/pending', [QuotationController::class, 'pending']);
      Route::post('quotations/approved', [QuotationController::class, 'approved']);
