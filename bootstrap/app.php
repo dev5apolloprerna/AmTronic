@@ -1,9 +1,10 @@
 <?php
-
+use App\Http\Middleware\AddApiResponseStatus;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -13,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        $middleware->api(append: [AddApiResponseStatus::class]);
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
             'api.token' => \App\Http\Middleware\AuthenticateApiToken::class,
@@ -25,4 +27,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->shouldRenderJsonWhen(
             fn (Request $request, \Throwable $exception) => $request->is('api/*') || $request->expectsJson(),
         );
+    // Exceptions are rendered outside the route middleware pipeline, so
+        // decorate their JSON responses here as well.
+        $exceptions->respond(function (Response $response) {
+            return request()->is('api/*')
+                ? AddApiResponseStatus::addStatus($response)
+                : $response;
+        });
+        
     })->create();

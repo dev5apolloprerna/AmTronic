@@ -9,6 +9,13 @@ class Quotation extends Model
 {
     use HasFactory;
 
+    protected static function booted(): void
+    {
+        // quotation_items also contains pre-submit rows with quotation_id = 0,
+        // so its database foreign key cannot enforce cascading deletes.
+        static::deleting(fn (Quotation $quotation) => $quotation->items()->delete());
+    }
+
     protected $fillable = [
         'quotation_number',
         'customer_id',
