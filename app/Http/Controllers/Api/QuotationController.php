@@ -204,6 +204,32 @@ class QuotationController extends Controller
             'data' => $this->detail($quotation),
         ], 201);
     }
+    /** Return quotation products in the same shape as the item mutation endpoints. */
+    public function productList(Request $request)
+    {
+        $data = $request->validate([
+            'quotation_id' => ['required', 'integer', 'min:0'],
+        ]);
+        $quotationId = (int) $data['quotation_id'];
+
+        if ($quotationId === 0) {
+            return response()->json([
+                'message' => 'Quotation products retrieved successfully.',
+                'quotation_id' => 0,
+                'data' => $this->draftDetail($request),
+            ]);
+        }
+
+        $quotation = Quotation::findOrFail($quotationId);
+        $this->owned($request, $quotation);
+
+        return response()->json([
+            'message' => 'Quotation products retrieved successfully.',
+            'quotation_id' => $quotation->id,
+            'data' => $this->detail($quotation),
+        ]);
+    }
+
 
     public function updateItem(Request $request)
     {
