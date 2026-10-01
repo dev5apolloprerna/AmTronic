@@ -533,6 +533,51 @@ class SalesExecutiveApiTest extends TestCase
             ->assertRedirect(route('quotations.show', $quotation))
             ->assertSessionHas('error', 'Approved quotations cannot be edited.');
     }
+
+    public function test_employee_can_update_quotation_details_without_sending_items(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+        $payload = $this->quotationPayload();
+        $productId = $payload['items'][0]['product_id'];
+        Customer::findOrFail($payload['customer_id'])->update([
+            'address' => 'Customer Default Road',
+            'address_line_2' => 'Customer Default Building',
+            'state' => 'Gujarat',
+            'city' => 'Vadodara',
+            'pincode' => '390001',
+        ]);
+        $quotationId = $this->withToken($token)
+            ->postJson('/api/quotations/create', $payload)
+            ->assertCreated()
+            ->json('data.id');
+
+        unset($payload['items']);
+        $payload['shipping_address'] = null;
+        $payload['shipping_address_line_2'] = null;
+        $payload['shipping_state'] = null;
+        $payload['shipping_city'] = null;
+        $payload['shipping_pincode'] = null;
+
+        $this->withToken($token)
+            ->postJson("/api/quotations/{$quotationId}/update", $payload)
+            ->assertOk()
+            ->assertJsonPath('message', 'Quotation updated successfully.')
+            ->assertJsonPath('data.quotation.shipping_address', 'Customer Default Road')
+            ->assertJsonPath('data.quotation.shipping_address_line_2', 'Customer Default Building')
+            ->assertJsonPath('data.quotation.shipping_state', 'Gujarat')
+            ->assertJsonPath('data.quotation.shipping_city', 'Vadodara')
+            ->assertJsonPath('data.quotation.shipping_pincode', '390001')
+            ->assertJsonCount(1, 'data.quotation.items')
+            ->assertJsonPath('data.quotation.items.0.amount', 100);
+
+        $this->assertDatabaseHas('quotation_items', [
+            'quotation_id' => $quotationId,
+            'product_id' => $productId,
+            'amount' => 100,
+        ]);
+    }
+    
     public function test_employee_can_persist_update_and_delete_products_individually(): void
     {
         $user = $this->salesExecutive();

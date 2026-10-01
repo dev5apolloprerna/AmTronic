@@ -149,12 +149,24 @@ class QuotationController extends Controller
             return response()->json(['message' => 'Sent or approved quotations cannot be edited.'], 409);
         }
 
-        $data = $this->validated($request, $quotation);
-        DB::transaction(function () use ($quotation, $data) {
+        $customerId = $request->validate([
+            'customer_id' => ['required', 'exists:customers,id'],
+        ])['customer_id'];
+
+        $this->applyCustomerShippingDefaults($request, Customer::findOrFail($customerId));
+
+        $data = $this->validated($request, $quotation, false);
+                DB::transaction(function () use ($quotation, $data) {
             $quotation->update($this->attributes($data));
-            $quotation->items()->delete();
-            $this->syncItems($quotation, $data['items']);
-            $quotation->recalculateTotals();
+
+            // Items are managed by their own mobile endpoints, so an update to
+            // quotation details must not remove them when the array is omitted.
+            if (array_key_exists('items', $data)) {
+                $quotation->items()->delete();
+                $this->syncItems($quotation, $data['items']);
+            }
+
+             $quotation->recalculateTotals();
         });
 
         return response()->json(['message' => 'Quotation updated successfully.', 'data' => $this->detail($quotation)]);
@@ -479,7 +491,7 @@ class QuotationController extends Controller
     }
 
 
-    private function validated(Request $request, ?Quotation $quotation = null): array
+    private function validated(Request $request, ?Quotation $quotation = null, bool $itemsRequired = true): array
     {
         $data = $request->validate([
             'customer_id' => ['required', 'exists:customers,id'], 'quotation_date' => ['required', 'date'],
@@ -490,14 +502,16 @@ class QuotationController extends Controller
             'shipping_state' => ['nullable', 'string', Rule::in(State::selectableNames($quotation?->shipping_state))],
             'shipping_city' => ['nullable', 'string', 'max:100'], 'shipping_pincode' => ['nullable', 'digits:6'],
 
-            'items' => ['required', 'array', 'min:1'],
+            'items' => [$itemsRequired ? 'required' : 'sometimes', 'array', 'min:1'],
             'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('status', 'active')],
             'items.*.description' => ['nullable', 'string', 'max:1000'],
             'items.*.qty' => ['required', 'numeric', 'min:0.01', 'max:999999.99'],
             'items.*.rate' => ['required', 'numeric', 'min:0', 'max:9999999.99'],
             'quotation_id' => ['nullable', 'integer', 'min:0'],
         ]);
-        $subtotal = collect($data['items'])->sum(fn ($item) => $item['qty'] * $item['rate']);
+        $subtotal = array_key_exists('items', $data)
+            ? collect($data['items'])->sum(fn ($item) => $item['qty'] * $item['rate'])
+            : (float) $quotation?->sub_total;
         if (($data['discount_amount'] ?? 0) > $subtotal) {
             abort(response()->json(['message' => 'The discount amount cannot exceed the subtotal.', 'errors' => ['discount_amount' => ['The discount amount cannot exceed the subtotal.']]], 422));
         }
