@@ -88,6 +88,13 @@ class QuotationController extends Controller
 
     public function store(Request $request)
     {
+          $customerId = $request->validate([
+            'customer_id' => ['required', 'exists:customers,id'],
+        ])['customer_id'];
+
+        $this->applyCustomerShippingDefaults($request, Customer::findOrFail($customerId));
+
+
         $usingDraftItems = $request->integer('quotation_id') === 0 && ! $request->has('items');
         if ($usingDraftItems) {
             $draftItems = $this->draftItems($request)->get();
@@ -478,10 +485,11 @@ class QuotationController extends Controller
             'customer_id' => ['required', 'exists:customers,id'], 'quotation_date' => ['required', 'date'],
             'gst_applicable' => ['required', 'boolean'], 'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'admin_charges' => ['nullable', 'numeric', 'min:0'], 'material_handling_charges' => ['nullable', 'numeric', 'min:0'],
-            'shipping_address_different' => ['nullable', 'boolean'], 'shipping_address' => ['required', 'string', 'max:2000'],
+            'shipping_address_different' => ['nullable', 'boolean'], 'shipping_address' => ['nullable', 'string', 'max:2000'],
             'shipping_address_line_2' => ['nullable', 'string', 'max:2000'],
-            'shipping_state' => ['required', 'string', Rule::in(State::selectableNames($quotation?->shipping_state))],
-            'shipping_city' => ['required', 'string', 'max:100'], 'shipping_pincode' => ['required', 'digits:6'],
+            'shipping_state' => ['nullable', 'string', Rule::in(State::selectableNames($quotation?->shipping_state))],
+            'shipping_city' => ['nullable', 'string', 'max:100'], 'shipping_pincode' => ['nullable', 'digits:6'],
+
             'items' => ['required', 'array', 'min:1'],
             'items.*.product_id' => ['required', Rule::exists('products', 'id')->where('status', 'active')],
             'items.*.description' => ['nullable', 'string', 'max:1000'],
@@ -494,6 +502,21 @@ class QuotationController extends Controller
             abort(response()->json(['message' => 'The discount amount cannot exceed the subtotal.', 'errors' => ['discount_amount' => ['The discount amount cannot exceed the subtotal.']]], 422));
         }
         return $data;
+    }
+     /** Fill omitted or blank create-request shipping fields from the selected customer. */
+    private function applyCustomerShippingDefaults(Request $request, Customer $customer): void
+    {
+        $defaults = [
+            'shipping_address' => $customer->address,
+            'shipping_address_line_2' => $customer->address_line_2,
+            'shipping_state' => $customer->state,
+            'shipping_city' => $customer->city,
+            'shipping_pincode' => $customer->pincode,
+        ];
+
+        $request->merge(collect($defaults)
+            ->filter(fn (mixed $default, string $field) => blank($request->input($field)))
+            ->all());
     }
 
     private function attributes(array $data): array
