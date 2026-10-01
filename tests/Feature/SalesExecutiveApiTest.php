@@ -260,7 +260,7 @@ class SalesExecutiveApiTest extends TestCase
             ->assertJsonPath('message', 'You do not have permission to access this document.');
     }
     
-     public function test_api_requires_an_explicit_gst_choice(): void
+    public function test_api_requires_an_explicit_gst_choice(): void
     {
         $token = $this->token($this->salesExecutive());
         $payload = $this->quotationPayload();
@@ -270,6 +270,55 @@ class SalesExecutiveApiTest extends TestCase
             ->assertUnprocessable()
             ->assertJsonValidationErrors('gst_applicable');
     }
+     public function test_create_quotation_defaults_null_shipping_details_from_customer(): void
+    {
+        $token = $this->token($this->salesExecutive());
+        $payload = $this->quotationPayload();
+        $customer = Customer::findOrFail($payload['customer_id']);
+        $customer->update(['address_line_2' => 'Warehouse 4']);
+
+        $payload['shipping_address'] = null;
+        $payload['shipping_address_line_2'] = null;
+        $payload['shipping_state'] = null;
+        $payload['shipping_city'] = null;
+        $payload['shipping_pincode'] = null;
+
+        $this->withToken($token)->postJson('/api/quotations/create', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.quotation.shipping_address', 'Main Road')
+            ->assertJsonPath('data.quotation.shipping_address_line_2', 'Warehouse 4')
+            ->assertJsonPath('data.quotation.shipping_state', 'Gujarat')
+            ->assertJsonPath('data.quotation.shipping_city', 'Surat')
+            ->assertJsonPath('data.quotation.shipping_pincode', '395001')
+            ->assertJsonPath('data.quotation.shipping_address_different', false);
+    }
+
+    public function test_create_quotation_shipping_details_are_optional(): void
+    {
+        $token = $this->token($this->salesExecutive());
+        $payload = $this->quotationPayload();
+        $customer = Customer::findOrFail($payload['customer_id']);
+        $customer->update([
+            'address' => null,
+            'state' => null,
+            'city' => null,
+            'pincode' => null,
+        ]);
+        unset(
+            $payload['shipping_address'],
+            $payload['shipping_state'],
+            $payload['shipping_city'],
+            $payload['shipping_pincode'],
+        );
+
+        $this->withToken($token)->postJson('/api/quotations/create', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.quotation.shipping_address', null)
+            ->assertJsonPath('data.quotation.shipping_state', null)
+            ->assertJsonPath('data.quotation.shipping_city', null)
+            ->assertJsonPath('data.quotation.shipping_pincode', null);
+    }
+    
 
 
         public function test_dedicated_quotation_lists_return_pending_approved_and_rejected_records(): void
