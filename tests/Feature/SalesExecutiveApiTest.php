@@ -117,22 +117,57 @@ class SalesExecutiveApiTest extends TestCase
     public function test_employee_can_view_and_update_profile(): void
     {
         $user = $this->salesExecutive();
+        $manager = Designation::create(['name' => 'Manager', 'status' => 'active']);
+        Designation::create(['name' => 'Retired Role', 'status' => 'inactive']);
+
         $token = $this->token($user);
 
         $this->withToken($token)->postJson('/api/profile')
             ->assertOk()
             ->assertJsonPath('data.email', $user->email)
+            ->assertJsonPath('data.mobile', null)
+            ->assertJsonPath('data.designation_id', $user->designation_id)
             ->assertJsonPath('data.designation', 'Sales Executive')
-            ->assertJsonPath('data.status', 'active');
+            ->assertJsonPath('data.status', 'active')
+            ->assertJsonFragment(['id' => $manager->id, 'name' => 'Manager'])
+            ->assertJsonMissing(['name' => 'Retired Role']);
 
         $this->withToken($token)->postJson('/api/profile/update', [
             'name' => 'Updated Executive',
             'email' => 'updated@example.com',
+            'mobile' => '+91 9876543210',
+            'designation_id' => $manager->id,
         ])->assertOk()
             ->assertJsonPath('data.name', 'Updated Executive')
-            ->assertJsonPath('data.email', 'updated@example.com');
+            ->assertJsonPath('data.email', 'updated@example.com')
+            ->assertJsonPath('data.mobile', '+91 9876543210')
+            ->assertJsonPath('data.designation_id', $manager->id)
+            ->assertJsonPath('data.designation', 'Manager');
 
-        $this->assertDatabaseHas('users', ['id' => $user->id, 'name' => 'Updated Executive']);
+
+
+ $this->assertDatabaseHas('users', [
+            'id' => $user->id,
+            'name' => 'Updated Executive',
+            'mobile' => '+91 9876543210',
+            'designation_id' => $manager->id,
+        ]);
+    }
+
+    public function test_profile_update_validates_mobile_and_designation(): void
+    {
+        $user = $this->salesExecutive();
+        $inactive = Designation::create(['name' => 'Inactive', 'status' => 'inactive']);
+        $token = $this->token($user);
+
+        $this->withToken($token)->postJson('/api/profile/update', [
+            'name' => $user->name,
+            'email' => $user->email,
+            'mobile' => 'not-a-phone',
+            'designation_id' => $inactive->id,
+        ])->assertUnprocessable()
+            ->assertJsonValidationErrors(['mobile', 'designation_id']);
+
     }
 
     public function test_forgot_password_otp_can_reset_password_and_revoke_token(): void
@@ -244,6 +279,48 @@ class SalesExecutiveApiTest extends TestCase
         $tamperedUrl = str_replace('user='.$user->id, 'user='.($user->id + 1), $response->json('data.documents.quotation.pdf_url'));
         $this->get($tamperedUrl)->assertUnauthorized();
     }
+     public function test_signed_pdf_links_survive_a_proxy_origin_change(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+        $quotationId = $this->withToken($token)
+            ->postJson('/api/quotations/create', $this->quotationPayload())
+            ->json('data.id');
+        $quotation = Quotation::findOrFail($quotationId);
+        $invoice = Invoice::create([
+            'invoice_number' => 'INV-PROXY-1',
+            'quotation_id' => $quotation->id,
+            'customer_id' => $quotation->customer_id,
+            'invoice_date' => '2026-10-01',
+            'sub_total' => $quotation->sub_total,
+            'gst_amount' => $quotation->gst_amount,
+            'total_amount' => $quotation->total_amount,
+            'document_status' => 'invoice_ready',
+        ]);
+        DeliveryChallan::create([
+            'challan_number' => 'DC-PROXY-1',
+            'invoice_id' => $invoice->id,
+            'challan_date' => '2026-10-01',
+        ]);
+
+        $documents = $this->withToken($token)
+            ->postJson("/api/quotations/{$quotationId}/show")
+            ->assertOk()
+            ->json('data.documents');
+
+        foreach (['invoice', 'delivery_challan'] as $document) {
+            $url = $documents[$document]['pdf_url'];
+            $this->assertStringStartsWith('http://localhost/api/', $url);
+
+            // Relative signatures deliberately exclude the origin, so an HTTPS
+            // proxy/public host does not invalidate an otherwise genuine URL.
+            $proxyUrl = preg_replace('#^http://localhost#', 'https://public.example.test', $url);
+            $this->get($proxyUrl)
+                ->assertOk()
+                ->assertHeader('content-type', 'application/pdf');
+        }
+    }
+
 
     public function test_api_pdf_links_require_the_owner_bearer_token(): void
     {
@@ -258,6 +335,102 @@ class SalesExecutiveApiTest extends TestCase
             ->getJson($url)
             ->assertForbidden()
             ->assertJsonPath('message', 'You do not have permission to access this document.');
+    }
+   public function test_employee_can_generate_invoice_and_delivery_challan_like_admin(): void
+    {
+        $user = $this->salesExecutive();
+        $token = $this->token($user);
+        $quotationId = $this->withToken($token)
+            ->postJson('/api/quotations/create', $this->quotationPayload())
+            ->assertCreated()
+            ->json('data.id');
+
+        $this->withToken($token)->postJson("/api/quotations/{$quotationId}/mark-sent")->assertOk();
+
+        $invoiceResponse = $this->withToken($token)
+            ->postJson("/api/quotations/{$quotationId}/generate-invoice", [
+                'invoice_number' => ' INV-API-100 ',
+                'invoice_date' => '2026-10-01',
+                'other_reference' => ' PO-55 ',
+            ])
+            ->assertCreated()
+            ->assertJsonPath('message', 'Invoice generated successfully.')
+            ->assertJsonPath('data.documents.invoice.number', 'INV-API-100')
+            ->assertJsonPath('data.documents.invoice.status_code', 'invoice_ready')
+            ->assertJsonStructure(['data' => ['documents' => ['invoice' => ['id', 'pdf_url']]]]);
+
+        $invoiceId = $invoiceResponse->json('data.documents.invoice.id');
+        $quotation = Quotation::findOrFail($quotationId);
+        $this->assertDatabaseHas('invoices', [
+            'id' => $invoiceId,
+            'quotation_id' => $quotationId,
+            'invoice_number' => 'INV-API-100',
+            'other_reference' => 'PO-55',
+            'total_amount' => $quotation->total_amount,
+        ]);
+        $this->assertDatabaseHas('customer_ledgers', [
+            'customer_id' => $quotation->customer_id,
+            'reference_type' => 'invoice',
+            'reference_id' => $invoiceId,
+            'entered_by' => $user->id,
+        ]);
+
+        $challanResponse = $this->withToken($token)
+            ->postJson("/api/invoices/{$invoiceId}/delivery-challan")
+            ->assertCreated()
+            ->assertJsonPath('message', 'Delivery challan generated successfully.')
+            ->assertJsonPath('data.documents.delivery_challan.status_code', 'delivery_challan_ready')
+            ->assertJsonStructure(['data' => ['documents' => ['delivery_challan' => ['id', 'number', 'pdf_url']]]]);
+
+        $this->get($invoiceResponse->json('data.documents.invoice.pdf_url'))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+        $this->get($challanResponse->json('data.documents.delivery_challan.pdf_url'))
+            ->assertOk()
+            ->assertHeader('content-type', 'application/pdf');
+
+        $this->withToken($token)
+            ->postJson("/api/quotations/{$quotationId}/generate-invoice", [
+                'invoice_number' => 'INV-API-101',
+                'invoice_date' => '2026-10-01',
+            ])
+            ->assertConflict()
+            ->assertJsonPath('message', 'Invoice has already been generated.');
+        $this->withToken($token)
+            ->postJson("/api/invoices/{$invoiceId}/delivery-challan")
+            ->assertConflict()
+            ->assertJsonPath('message', 'Delivery challan has already been generated.');
+    }
+
+    public function test_invoice_generation_api_validates_workflow_and_ownership(): void
+    {
+        $owner = $this->salesExecutive();
+        $ownerToken = $this->token($owner);
+        $quotationId = $this->withToken($ownerToken)
+            ->postJson('/api/quotations/create', $this->quotationPayload())
+            ->json('data.id');
+
+        $this->withToken($ownerToken)
+            ->postJson("/api/quotations/{$quotationId}/generate-invoice", [
+                'invoice_number' => 'INV-TOO-EARLY',
+                'invoice_date' => '2026-10-01',
+            ])
+            ->assertConflict()
+            ->assertJsonPath('message', 'Send the quotation before generating an invoice.');
+
+        $otherToken = $this->token($this->salesExecutive());
+        $this->withToken($otherToken)
+            ->postJson("/api/quotations/{$quotationId}/generate-invoice", [
+                'invoice_number' => 'INV-NOT-OWNED',
+                'invoice_date' => '2026-10-01',
+            ])
+            ->assertForbidden();
+
+        $this->withToken($ownerToken)->postJson("/api/quotations/{$quotationId}/mark-sent")->assertOk();
+        $this->withToken($ownerToken)
+            ->postJson("/api/quotations/{$quotationId}/generate-invoice", [])
+            ->assertUnprocessable()
+            ->assertJsonValidationErrors(['invoice_number', 'invoice_date']);
     }
     
     public function test_api_requires_an_explicit_gst_choice(): void
@@ -577,7 +750,7 @@ class SalesExecutiveApiTest extends TestCase
             'amount' => 100,
         ]);
     }
-    
+
     public function test_employee_can_persist_update_and_delete_products_individually(): void
     {
         $user = $this->salesExecutive();

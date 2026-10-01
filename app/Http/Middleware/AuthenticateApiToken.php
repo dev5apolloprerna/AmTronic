@@ -34,7 +34,7 @@ class AuthenticateApiToken
      */
     private function userFromSignedDocumentLink(Request $request): ?User
     {
-        if (! $request->routeIs('api.*.pdf') || ! $request->hasValidSignature()) {
+        if (! $request->routeIs('api.*.pdf') || ! $request->hasValidSignature(false)) {
             return null;
         }
 
