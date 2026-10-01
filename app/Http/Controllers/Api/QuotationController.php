@@ -9,6 +9,7 @@ use App\Models\Product;
 use App\Models\Quotation;
 use App\Models\QuotationItem;
 use App\Models\State;
+use App\Models\Designation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
@@ -83,6 +84,7 @@ class QuotationController extends Controller
             'customers' => Customer::orderBy('name')->get(),
             'products' => Product::where('status', 'active')->orderBy('name')->get(),
             'states' => State::selectableNames(),
+            'designation' => Designation::select('id','name')->where('status', 'active')->orderBy('name')->get(),
         ]]);
     }
 
@@ -395,9 +397,18 @@ class QuotationController extends Controller
         ];
     }
 
-   private static function documentUrl(string $route, array $parameters, Quotation $quotation): string
+    private static function documentUrl(string $route, array $parameters, Quotation $quotation): string
     {
-        return URL::signedRoute($route, $parameters + ['user' => $quotation->user_id]);
+         $relativeUrl = URL::signedRoute(
+            $route,
+            $parameters + ['user' => $quotation->user_id],
+            absolute: false,
+        );
+
+        $pathAndQuery = $relativeUrl[0] === '/' ? $relativeUrl : '/'.$relativeUrl;
+
+        return request()->getSchemeAndHttpHost().$pathAndQuery;
+
     }
 
 

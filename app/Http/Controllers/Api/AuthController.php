@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Designation;
+
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class AuthController extends Controller
@@ -62,7 +64,11 @@ class AuthController extends Controller
     }
         public function profile(Request $request)
     {
-        return response()->json(['data' => $this->userData($request->user()->load('designation'))]);
+        $user = $request->user()->load('designation');
+
+        return response()->json([
+            'data' => $this->userData($user),
+        ]);
     }
 
     public function updateProfile(Request $request)
@@ -71,6 +77,13 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
+            'mobile' => ['nullable', 'regex:/^[0-9+() -]{7,15}$/'],
+            'designation_id' => [
+                'required',
+                Rule::exists('designations', 'id')->where(fn ($query) => $query
+                    ->where('status', 'active')
+                    ->orWhere('id', $user->designation_id)),
+            ],
         ]);
 
         $user->update($data);
@@ -158,6 +171,8 @@ class AuthController extends Controller
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
+            'mobile' => $user->mobile,
+            'designation_id' => $user->designation_id,
             'designation' => $user->designation?->name,
             'status' => $user->status,
         ];

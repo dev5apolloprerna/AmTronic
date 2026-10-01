@@ -3,6 +3,8 @@
     use App\Http\Controllers\Api\DashboardController;
     use App\Http\Controllers\Api\DocumentController;
     use App\Http\Controllers\Api\QuotationController;
+    use App\Http\Controllers\Api\InvoiceController;
+
     use Illuminate\Support\Facades\Route;
  
      Route::post('login', [AuthController::class, 'login']);
@@ -37,6 +39,8 @@
      Route::post('quotations/{quotation}/show', [QuotationController::class, 'show'])->whereNumber('quotation');
      Route::post('quotations/{quotation}/update', [QuotationController::class, 'update'])->whereNumber('quotation');
      Route::post('quotations/{quotation}/delete', [QuotationController::class, 'destroy'])->whereNumber('quotation');
+     Route::post('quotations/{quotation}/generate-invoice', [InvoiceController::class, 'store'])->whereNumber('quotation');
+     Route::post('invoices/{invoice}/delivery-challan', [InvoiceController::class, 'storeDeliveryChallan'])->whereNumber('invoice');
  
  
      Route::post('quotations/{quotation}/mark-sent', [QuotationController::class, 'markSent'])->whereNumber('quotation');
