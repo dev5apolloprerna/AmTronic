@@ -103,12 +103,27 @@ Route::middleware('guest')->group(function () {
         Route::get('reports/employee-attendance', [ReportController::class, 'employeeAttendance'])->name('reports.employee-attendance');
         Route::get('reports/employee-attendance-history', [ReportController::class, 'employeeAttendanceHistory'])->name('reports.employee-attendance-history');
 
+
+        // NEW: ledger page (put it BEFORE Route::resource if your resource includes 'show')
+    Route::get('employee-advances/{employeeAdvance}/ledger', [EmployeeAdvanceController::class, 'ledger'])
+        ->name('employee-advances.ledger');
+     
+    // Existing (keep as you have them)
+    Route::resource('employee-advances', EmployeeAdvanceController::class)->except(['show']);
+    Route::post('employee-advances/{employeeAdvance}/returns', [EmployeeAdvanceController::class, 'storeReturn'])
+        ->name('employee-advances.returns.store');
+    Route::delete('employee-advances/{employeeAdvance}/returns/{advanceReturn}', [EmployeeAdvanceController::class, 'destroyReturn'])
+        ->name('employee-advances.returns.destroy');
+
+
+
         Route::get('reports/customer-ledger/export/pdf', [ReportController::class, 'customerLedgerPdf'])->name('reports.customer-ledger.pdf');
         Route::get('reports/sales/export/excel', [ReportController::class, 'salesExcel'])->name('reports.sales.excel');
         Route::get('reports/sales/export/pdf', [ReportController::class, 'salesPdf'])->name('reports.sales.pdf');
     });
         Route::get('customers/{customer}', [CustomerController::class, 'show'])->name('customers.show');
 });
+
 
 
 Route::get('/check-logo-path', function () {
