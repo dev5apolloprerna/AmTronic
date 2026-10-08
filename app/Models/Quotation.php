@@ -112,7 +112,9 @@ class Quotation extends Model
 
     public function isEditable(): bool
     {
-        return $this->status === 'draft' && $this->document_status !== 'quotation_sent';
+        return $this->status === 'draft'
+            && $this->document_status !== 'quotation_sent'
+            && ! $this->invoice()->exists();
     }
 
     public function isSent(): bool

@@ -36,6 +36,8 @@
      Route::post('quotations/items/delete', [QuotationController::class, 'destroyItem']);
  
      Route::post('quotations/create', [QuotationController::class, 'store']);
+     Route::post('invoices/mark-sent', [InvoiceController::class, 'markSent']);
+     Route::post('invoices/approve', [InvoiceController::class, 'markSent']);
      Route::post('quotations/{quotation}/show', [QuotationController::class, 'show'])->whereNumber('quotation');
      Route::post('quotations/{quotation}/update', [QuotationController::class, 'update'])->whereNumber('quotation');
      Route::post('quotations/{quotation}/delete', [QuotationController::class, 'destroy'])->whereNumber('quotation');

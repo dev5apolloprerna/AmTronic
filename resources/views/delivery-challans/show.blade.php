@@ -3,7 +3,7 @@
 @section('content')<div class="card">
 	<div class="card-header">
 		<h3>{{ $deliveryChallan->challan_number }}</h3>
-		<div><a class="btn btn-primary btn-sm"
+		<div><a class="btn btn-primary btn-sm" target="_blank" 
 				href="{{ route('delivery-challans.download',$deliveryChallan) }}">Download PDF</a><a
 				class="btn btn-secondary btn-sm" href="{{ route('invoices.show',$deliveryChallan->invoice) }}">Back to
 				Invoice</a></div>
