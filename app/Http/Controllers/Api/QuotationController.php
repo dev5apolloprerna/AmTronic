@@ -148,7 +148,8 @@ class QuotationController extends Controller
     {
         $this->owned($request, $quotation);
         if (! $quotation->isEditable()) {
-            return response()->json(['message' => 'Sent or approved quotations cannot be edited.'], 409);
+            return response()->json(['message' => 'Sent, approved, or invoiced quotations cannot be edited.'], 409);
+
         }
 
         $customerId = $request->validate([
@@ -442,7 +443,7 @@ class QuotationController extends Controller
 
     private function itemNotEditableResponse()
     {
-        return response()->json(['message' => 'Products on sent, approved, or rejected quotations cannot be changed.'], 409);
+        return response()->json(['message' => 'Products on sent, approved, rejected, or invoiced quotations cannot be changed.'], 409);
     }
 
     private function validatedItem(Request $request, bool $quotationIdRequired = false): array

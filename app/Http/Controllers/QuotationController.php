@@ -185,7 +185,7 @@ class QuotationController extends Controller
         $this->authorizeAccess($quotation);
 
         if (! $quotation->isEditable()) {
-            return redirect()->route('quotations.show', $quotation)->with('error', 'Approved quotations cannot be edited.');
+            return redirect()->route('quotations.show', $quotation)->with('error', 'Sent, approved, or invoiced quotations cannot be edited.');
         }
 
         $quotation->load('items.product', 'items.material');
@@ -200,7 +200,7 @@ class QuotationController extends Controller
         $this->authorizeAccess($quotation);
 
         if (! $quotation->isEditable()) {
-            return redirect()->route('quotations.show', $quotation)->with('error', 'Approved quotations cannot be edited.');
+            return redirect()->route('quotations.show', $quotation)->with('error', 'Sent, approved, or invoiced quotations cannot be edited.');
         }
 
         $data = $this->validateData($request, $quotation);

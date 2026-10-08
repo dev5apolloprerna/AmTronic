@@ -11,6 +11,41 @@ use Illuminate\Support\Facades\DB;
 
 class InvoiceController extends Controller
 {
+     /** Sending an invoice also approves it, matching the web workflow. */
+    public function markSent(Request $request)
+    {
+        $data = $request->validate([
+            'invoice_id' => ['required', 'integer', 'min:1'],
+        ]);
+
+        return DB::transaction(function () use ($request, $data) {
+            $invoice = Invoice::with('quotation')->lockForUpdate()->findOrFail($data['invoice_id']);
+            $this->owned($request, $invoice->quotation);
+
+            if ($invoice->document_status === 'invoice_approved') {
+                return response()->json(['message' => 'Invoice has already been sent and approved.'], 409);
+            }
+
+            if ($invoice->document_status !== 'invoice_ready') {
+                return response()->json(['message' => 'Only ready invoices can be sent and approved.'], 409);
+            }
+
+            $invoice->update(['document_status' => 'invoice_approved']);
+
+            return response()->json([
+                'message' => 'Invoice sent and approved successfully.',
+                'data' => [
+                    'invoice_id' => $invoice->id,
+                    'invoice_number' => $invoice->invoice_number,
+                    'quotation_id' => $invoice->quotation_id,
+                    'document_status' => $invoice->document_status,
+                    'quotation_editable' => $invoice->quotation->isEditable(),
+                ],
+            ]);
+        });
+    }
+
+
     public function store(Request $request, Quotation $quotation)
     {
         $this->owned($request, $quotation);

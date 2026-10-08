@@ -704,7 +704,7 @@ class SalesExecutiveApiTest extends TestCase
         $quotation = Quotation::findOrFail($id);
         $this->actingAs($admin)->get(route('quotations.edit', $quotation))
             ->assertRedirect(route('quotations.show', $quotation))
-            ->assertSessionHas('error', 'Approved quotations cannot be edited.');
+            ->assertSessionHas('error', 'Sent, approved, or invoiced quotations cannot be edited.');
     }
 
     public function test_employee_can_update_quotation_details_without_sending_items(): void
