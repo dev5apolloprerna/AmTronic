@@ -25,7 +25,7 @@
                     <tr>
                         <td>{{ $attendance->employee->name }}</td>
                         <td>{{ $attendance->attendance_date->format('d M Y') }}</td>
-                        <td><span class="pill pill-{{ $attendance->status }}">{{ ucwords(str_replace('_', ' ', $attendance->status)) }}</span></td>
+                        <td><span class="pill pill-attendance-{{ $attendance->status }}">{{ ucwords(str_replace('_', ' ', $attendance->status)) }}</span></td>
                     </tr>
                 @empty
                     <tr><td colspan="3" class="text-center text-muted">No attendance records found.</td></tr>

@@ -15,6 +15,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\QuotationController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\StateController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VendorController;
@@ -102,6 +103,13 @@ Route::middleware('guest')->group(function () {
         Route::get('reports/customer-ledger/export/excel', [ReportController::class, 'customerLedgerExcel'])->name('reports.customer-ledger.excel');
         Route::get('reports/employee-attendance', [ReportController::class, 'employeeAttendance'])->name('reports.employee-attendance');
         Route::get('reports/employee-attendance-history', [ReportController::class, 'employeeAttendanceHistory'])->name('reports.employee-attendance-history');
+        Route::get('reports/salary', [SalaryController::class, 'index'])->name('reports.salary');
+        Route::post('reports/salary', [SalaryController::class, 'store'])->name('reports.salary.store');
+        Route::delete('reports/salary', [SalaryController::class, 'destroy'])->name('reports.salary.destroy');
+        Route::get('reports/salary/export/excel', [SalaryController::class, 'excel'])->name('reports.salary.excel');
+        Route::get('salary-slips/{salarySlip}', [SalaryController::class, 'slip'])->name('salary-slips.show');
+        Route::get('salary-slips/{salarySlip}/download', [SalaryController::class, 'slipPdf'])->name('salary-slips.download');
+        Route::delete('salary-slips/{salarySlip}', [SalaryController::class, 'destroySlip'])->name('salary-slips.destroy');
 
 
         // NEW: ledger page (put it BEFORE Route::resource if your resource includes 'show')

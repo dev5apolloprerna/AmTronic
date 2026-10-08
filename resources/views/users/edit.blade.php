@@ -61,6 +61,13 @@
                         </select>
                     </div>
                 </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="monthly_salary">Monthly Salary (₹)</label>
+                        <input type="number" step="0.01" min="0" class="form-control" id="monthly_salary" name="monthly_salary" value="{{ old('monthly_salary', $user->monthly_salary) }}">
+                        <div class="form-hint">Used by the Salary Report. Every employee gets 2 paid leaves a month.</div>
+                    </div>
+                </div>
                 <button type="submit" class="btn btn-primary">Update Employee</button>
             </form>
         </div>

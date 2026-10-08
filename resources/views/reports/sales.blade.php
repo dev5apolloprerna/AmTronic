@@ -30,7 +30,7 @@
 
             <div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;">
                 <a class="btn btn-success" href="{{ route('reports.sales.excel', ['customer_id' => $customerId, 'from_date' => $fromDate, 'to_date' => $toDate]) }}">Export to Excel</a>
-                <a class="btn btn-primary" href="{{ route('reports.sales.pdf', ['customer_id' => $customerId, 'from_date' => $fromDate, 'to_date' => $toDate]) }}">Download PDF</a>
+                <a class="btn btn-primary" target="_blank" href="{{ route('reports.sales.pdf', ['customer_id' => $customerId, 'from_date' => $fromDate, 'to_date' => $toDate]) }}">Download PDF</a>
             </div>
 
             <div class="stat-grid" style="margin-top:20px;">

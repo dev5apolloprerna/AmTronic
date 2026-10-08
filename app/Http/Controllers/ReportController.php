@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\SalaryCalculator;
 
 class ReportController extends Controller
 {
@@ -60,6 +61,37 @@ class ReportController extends Controller
         return view('reports.employee-attendance-history', compact(
             'history', 'employees', 'fromDate', 'toDate', 'employeeId'
         ));
+    }
+
+    /**
+     * Month-wise salary from attendance, with 2 paid leaves per employee.
+     */
+    public function salary(Request $request)
+    {
+        return view('reports.salary', $this->salaryData($request));
+    }
+
+    public function salaryExcel(Request $request)
+    {
+        $data = $this->salaryData($request);
+        $filename = sprintf('salary-report-%04d-%02d.xls', $data['year'], $data['month']);
+
+        return response()
+            ->view('reports.salary-excel', $data)
+            ->header('Content-Type', 'application/vnd.ms-excel; charset=UTF-8')
+            ->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
+    }
+
+    private function salaryData(Request $request): array
+    {
+        $filters = $request->validate([
+            'month' => ['nullable', 'integer', 'between:1,12'],
+            'year' => ['nullable', 'integer', 'between:2000,2100'],
+        ]);
+        $month = (int) ($filters['month'] ?? now()->month);
+        $year = (int) ($filters['year'] ?? now()->year);
+
+        return ['month' => $month, 'year' => $year] + SalaryCalculator::forMonth($year, $month);
     }
 
     private function attendanceRange($query, ?string $fromDate, ?string $toDate)
