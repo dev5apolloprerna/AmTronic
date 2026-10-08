@@ -43,6 +43,7 @@ class UserController extends Controller
         $loginRequired = $this->grantsLogin($request);
 
         $data = $request->validate($this->rules(null, $loginRequired));
+        $data['monthly_salary'] = $data['monthly_salary'] ?? 0;
 
         // Employees who cannot log in get no password at all (the key is left
         // out, so the column stays NULL).
@@ -73,6 +74,7 @@ class UserController extends Controller
         }
 
         $data = $request->validate($this->rules($user, $loginRequired));
+        $data['monthly_salary'] = $data['monthly_salary'] ?? 0;
 
         // A blank password keeps the current one. For employees who cannot log
         // in, any stored password is left untouched and none can be set.
@@ -133,6 +135,7 @@ class UserController extends Controller
             'role' => ['required', 'in:super_admin,user'],
             'designation_id' => ['nullable', $this->designationRule($user?->designation_id)],
             'status' => ['required', 'in:active,inactive'],
+            'monthly_salary' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
         ];
 
         if ($loginRequired) {

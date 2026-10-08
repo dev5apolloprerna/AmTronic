@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\EmployeeAttendance;
+use App\Models\SalarySlip;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +42,18 @@ class EmployeeAttendanceController extends Controller
             ],
             'status' => ['required', Rule::in(EmployeeAttendance::STATUSES)],
         ]);
+
+        // Attendance of a month whose salary is processed is locked.
+        $date = \Carbon\Carbon::parse($data['attendance_date']);
+        $locked = SalarySlip::with('employee')
+            ->where('year', $date->year)->where('month', $date->month)
+            ->where('status', SalarySlip::PROCESSED)
+            ->whereIn('employee_id', $data['employee_ids'])
+            ->get();
+        if ($locked->isNotEmpty()) {
+            return back()->withInput()->with('error', 'Salary for '.$date->format('F Y').' is already processed for '
+                .$locked->pluck('employee.name')->join(', ').'. Delete & regenerate that salary before changing attendance.');
+        }
 
         DB::transaction(function () use ($request, $data) {
             foreach ($data['employee_ids'] as $employeeId) {

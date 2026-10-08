@@ -39,6 +39,7 @@
 
                     <a href="{{ route('reports.employee-attendance') }}" class="{{ request()->routeIs('reports.employee-attendance') ? 'active' : '' }}">Emp Attendance Report</a>
                     <a href="{{ route('reports.employee-attendance-history') }}" class="{{ request()->routeIs('reports.employee-attendance-history') ? 'active' : '' }}">Emp Attendance History</a>
+                    <a href="{{ route('reports.salary') }}" class="{{ request()->routeIs('reports.salary*') ? 'active' : '' }}">Salary Calculation</a>
 
                 @endif
             </nav>

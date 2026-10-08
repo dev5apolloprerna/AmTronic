@@ -18,6 +18,7 @@ class User extends Authenticatable
         'role',
         'status',
         'designation_id',
+        'monthly_salary',
         'api_token',
     ];
 
@@ -32,6 +33,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'monthly_salary' => 'decimal:2',
         ];
     }
 
@@ -90,5 +92,10 @@ class User extends Authenticatable
      public function attendances()
     {
         return $this->hasMany(EmployeeAttendance::class, 'employee_id');
+    }
+
+    public function salarySlips()
+    {
+        return $this->hasMany(SalarySlip::class, 'employee_id');
     }
 }
