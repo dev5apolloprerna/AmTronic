@@ -5,6 +5,8 @@ namespace App\Providers;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
+
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -19,14 +21,14 @@ class AppServiceProvider extends ServiceProvider
     /**
      * Bootstrap any application services.
      */
+
     public function boot(): void
     {
-        // Fix "Specified key was too long" error on older MySQL/MariaDB
-        // versions (utf8mb4 + default 255-length unique/index columns
-        // can exceed the max key length). 191 chars * 4 bytes = 764 bytes,
-        // safely under the 767/1000 byte limits.
-        Schema::defaultStringLength(191);
-
-        Paginator::useBootstrapFive();
+        if ($root = rtrim((string) config('app.url'), '/')) {
+            URL::forceRootUrl($root);
+            if (str_starts_with($root, 'https://')) {
+                URL::forceScheme('https');
+            }
+        }
     }
 }

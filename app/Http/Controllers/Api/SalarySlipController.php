@@ -135,6 +135,7 @@ class SalarySlipController extends Controller
         $parameters = ['salarySlip' => $slip->id, 'user' => $slip->employee_id] + ($download ? ['download' => 1] : []);
         $relative = URL::signedRoute('api.salary-slips.pdf', $parameters, absolute: false);
 
-        return request()->getSchemeAndHttpHost().($relative[0] === '/' ? $relative : '/'.$relative);
+        return rtrim(config('app.url'), '/').($relative[0] === '/' ? $relative : '/'.$relative);
+
     }
 }

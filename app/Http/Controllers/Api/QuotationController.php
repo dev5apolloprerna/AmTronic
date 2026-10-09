@@ -148,6 +148,7 @@ class QuotationController extends Controller
     {
         $this->owned($request, $quotation);
         if (! $quotation->isEditable()) {
+
             return response()->json(['message' => 'Sent, approved, or invoiced quotations cannot be edited.'], 409);
 
         }
@@ -400,7 +401,7 @@ class QuotationController extends Controller
 
     private static function documentUrl(string $route, array $parameters, Quotation $quotation): string
     {
-         $relativeUrl = URL::signedRoute(
+        $relativeUrl = URL::signedRoute(
             $route,
             $parameters + ['user' => $quotation->user_id],
             absolute: false,
@@ -408,7 +409,7 @@ class QuotationController extends Controller
 
         $pathAndQuery = $relativeUrl[0] === '/' ? $relativeUrl : '/'.$relativeUrl;
 
-        return request()->getSchemeAndHttpHost().$pathAndQuery;
+        return rtrim(config('app.url'), '/').$pathAndQuery;
 
     }
 
