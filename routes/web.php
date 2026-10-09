@@ -5,6 +5,7 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DesignationController;
 use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MySalarySlipController;
 use App\Http\Controllers\MaterialController;
 use App\Http\Controllers\PurchaseOrderController;
 use App\Http\Controllers\EmployeeAdvanceController;
@@ -36,6 +37,11 @@ Route::middleware('guest')->group(function () {
     Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Employee's own processed salary slips
+    Route::get('my-salary-slips', [MySalarySlipController::class, 'index'])->name('my-salary-slips.index');
+    Route::get('my-salary-slips/{salarySlip}', [MySalarySlipController::class, 'show'])->whereNumber('salarySlip')->name('my-salary-slips.show');
+    Route::get('my-salary-slips/{salarySlip}/download', [MySalarySlipController::class, 'download'])->whereNumber('salarySlip')->name('my-salary-slips.download');
 
     // Quotations - accessible to both roles (user creates/manages own, super_admin sees all)
     Route::resource('quotations', QuotationController::class);

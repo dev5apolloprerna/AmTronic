@@ -3,9 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\SalarySlip;
-use App\Support\AmountInWords;
 use App\Support\SalaryCalculator;
-use Barryvdh\DomPDF\Facade\Pdf;
+use App\Support\SalarySlipDocument;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -202,29 +201,14 @@ class SalaryController extends Controller
 
     public function slip(SalarySlip $salarySlip)
     {
-        return view('salary.slip', $this->slipData($salarySlip) + ['pdf' => false]);
+        return view('salary.slip', SalarySlipDocument::data(
+            $salarySlip, false, route('reports.salary', ['month' => $salarySlip->month, 'year' => $salarySlip->year])
+        ) + ['downloadUrl' => route('salary-slips.download', $salarySlip)]);
     }
 
     public function slipPdf(SalarySlip $salarySlip)
     {
-        $data = $this->slipData($salarySlip);
-        $name = preg_replace('/[^A-Za-z0-9]+/', '-', $salarySlip->employee->name) ?: 'employee';
-        $filename = strtolower(sprintf('salary-slip-%s-%04d-%02d.pdf', trim($name, '-'), $salarySlip->year, $salarySlip->month));
-
-        return Pdf::loadView('salary.slip', $data + ['pdf' => true])
-            ->setPaper('a4')
-            ->download($filename);
-    }
-
-    private function slipData(SalarySlip $salarySlip): array
-    {
-        $salarySlip->load(['employee.designation', 'submittedBy', 'processedBy']);
-
-        return [
-            'slip' => $salarySlip,
-            'company' => config('invoice'),
-            'amountInWords' => AmountInWords::rupees((float) $salarySlip->net_salary),
-        ];
+        return SalarySlipDocument::response($salarySlip, true);
     }
 
     private function sheetData(Request $request): array

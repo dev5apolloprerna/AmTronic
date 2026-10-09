@@ -4,6 +4,7 @@
     use App\Http\Controllers\Api\DocumentController;
     use App\Http\Controllers\Api\QuotationController;
     use App\Http\Controllers\Api\InvoiceController;
+    use App\Http\Controllers\Api\SalarySlipController;
 
     use Illuminate\Support\Facades\Route;
  
@@ -58,4 +59,10 @@
         ->whereNumber('invoice')->name('api.invoices.pdf');
     Route::get('delivery-challans/{deliveryChallan}/pdf', [DocumentController::class, 'deliveryChallan'])
         ->whereNumber('deliveryChallan')->name('api.delivery-challans.pdf');
+
+    // Salary slips of the logged-in employee (processed salary only)
+    Route::post('salary-slips/list', [SalarySlipController::class, 'index']);
+    Route::post('salary-slips/{salarySlip}/show', [SalarySlipController::class, 'show'])->whereNumber('salarySlip');
+    Route::match(['get', 'post'], 'salary-slips/{salarySlip}/pdf', [SalarySlipController::class, 'pdf'])
+        ->whereNumber('salarySlip')->name('api.salary-slips.pdf');
  });
