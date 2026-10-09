@@ -89,6 +89,39 @@ class SalarySlipApiTest extends TestCase
         $this->withToken($token)->postJson("/api/salary-slips/{$draft->id}/show")->assertNotFound();
         $this->withToken($token)->postJson("/api/salary-slips/{$others->id}/pdf")->assertNotFound()->assertJsonPath('status', false);
     }
+        public function test_salary_pdf_and_download_urls_preserve_the_configured_subdirectory(): void
+    {
+        config(['app.url' => 'https://getdemo.in/AmTronic/']);
+        $employee = $this->employee();
+        $slip = $this->slip($employee, 9);
+        $token = $this->token($employee);
+
+        $list = $this->withToken($token)->postJson('/api/salary-slips/list')->assertOk();
+        $detail = $this->withToken($token)->postJson("/api/salary-slips/{$slip->id}/show")->assertOk();
+        foreach (['pdf_url', 'download_url'] as $field) {
+            $url = $list->json('data.0.'.$field);
+            $this->assertStringStartsWith('https://getdemo.in/AmTronic/api/salary-slips/'.$slip->id.'/pdf?', $url);
+            $this->assertSame($url, $detail->json('data.'.$field));
+        }
+
+        $this->flushHeaders();
+        $this->app['auth']->forgetGuards();
+        $server = [
+            'SCRIPT_NAME' => '/AmTronic/index.php',
+            'PHP_SELF' => '/AmTronic/index.php',
+            'SCRIPT_FILENAME' => '/var/www/AmTronic/index.php',
+        ];
+        foreach (['pdf_url' => 'inline;', 'download_url' => 'attachment;'] as $field => $disposition) {
+            $url = $list->json('data.0.'.$field);
+            $response = $this->call('GET', $url, [], [], [], $server)
+                ->assertOk()->assertHeader('Content-Type', 'application/pdf');
+            $this->assertStringStartsWith($disposition, $response->headers->get('Content-Disposition'));
+            $this->assertStringStartsWith('%PDF-', $response->getContent());
+            $this->call('GET', str_replace('signature=', 'signature=x', $url), [], [], [], $server)
+                ->assertUnauthorized();
+        }
+    }
+
 
     public function test_pdf_downloads_with_token_and_with_signed_link(): void
     {
@@ -119,6 +152,7 @@ class SalarySlipApiTest extends TestCase
         // tampered signed link is rejected
         $this->get(str_replace('signature=', 'signature=x', $url))->assertUnauthorized();
     }
+
 
     public function test_requires_login(): void
     {
