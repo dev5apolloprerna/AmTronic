@@ -5,7 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') - Vendor & Quotation Manager</title>
-    <link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ filemtime(public_path('css/app.css')) }}">
+@php
+    $cssPath = public_path('css/app.css');
+    $cssVersion = file_exists($cssPath) ? filemtime($cssPath) : time();
+@endphp
+
+<link rel="stylesheet" href="{{ asset('css/app.css') }}?v={{ $cssVersion }}">
     @stack('styles')
 </head>
 <body>
@@ -17,6 +22,9 @@
 
                 <div class="sidebar-section">Sales</div>
                 <a href="{{ route('quotations.index') }}" class="{{ request()->routeIs('quotations.*') ? 'active' : '' }}">Quotations</a>
+                @unless(auth()->user()->isSuperAdmin())
+                    <a href="{{ route('my-salary-slips.index') }}" class="{{ request()->routeIs('my-salary-slips.*') ? 'active' : '' }}">My Salary Slips</a>
+                @endunless
                 <!-- <a href="{{ route('payment-collections.index') }}" class="{{ request()->routeIs('payment-collections.*') ? 'active' : '' }}">Payment Collection</a> -->
                 @if(auth()->user()->isSuperAdmin())
                     <div class="sidebar-section">Masters</div>

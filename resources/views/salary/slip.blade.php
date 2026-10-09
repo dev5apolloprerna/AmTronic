@@ -52,19 +52,24 @@
 <body>
 @unless($pdf)
     <div class="toolbar">
-        <a class="btn-back" href="{{ route('reports.salary', ['month' => $slip->month, 'year' => $slip->year]) }}">&larr; Salary Sheet</a>
+        @if(! empty($backUrl))<a class="btn-back" href="{{ $backUrl }}">&larr; Back</a>@endif
         <button class="btn-print" onclick="window.print()">Print</button>
-        <a class="btn-pdf" href="{{ route('salary-slips.download', $slip) }}">Download PDF</a>
+        @if(! empty($downloadUrl))<a class="btn-pdf" href="{{ $downloadUrl }}">Download PDF</a>@endif
     </div>
 @endunless
 <div class="page">
     @unless($slip->isProcessed())
         <div class="draft-mark">DRAFT</div>
     @endunless
-    @php($logo = $pdf ? public_path('images/logo-dark.png') : asset('images/logo-dark.png'))
     <table class="head">
         <tr>
-            <td style="width:50%"><img src="{{ $logo }}" alt="{{ $company['company_name'] }}"></td>
+            <td style="width:50%">
+                @if(! empty($logoSrc))
+                    <img src="{{ $logoSrc }}" alt="{{ $company['company_name'] }}">
+                @else
+                    <strong style="font-size:20px;color:#c02026;">{{ $company['company_name'] }}</strong>
+                @endif
+            </td>
             <td class="addr">
                 <strong>{{ $company['company_name'] }}</strong><br>
                 {{ $company['address'] }}<br>
