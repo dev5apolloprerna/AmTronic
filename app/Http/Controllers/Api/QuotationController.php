@@ -147,10 +147,8 @@ class QuotationController extends Controller
     public function update(Request $request, Quotation $quotation)
     {
         $this->owned($request, $quotation);
-        if (! $quotation->isEditable()) {
-
-            return response()->json(['message' => 'Sent, approved, or invoiced quotations cannot be edited.'], 409);
-
+        if (! $quotation->canBeModified()) {
+            return response()->json(['message' => 'Quotation cannot be edited after its invoice has been generated.'], 409);
         }
 
         $customerId = $request->validate([
@@ -180,8 +178,8 @@ class QuotationController extends Controller
     {
 
         $this->owned($request, $quotation);
-        if (! $quotation->isEditable()) {
-            return response()->json(['message' => 'Sent or approved quotations cannot be deleted.'], 409);
+        if (! $quotation->canBeModified()) {
+            return response()->json(['message' => 'Quotation cannot be deleted after its invoice has been generated.'], 409);
         }
         $quotation->delete();
         return response()->json(['message' => 'Quotation deleted successfully.']);
@@ -209,7 +207,7 @@ class QuotationController extends Controller
         $quotation = Quotation::findOrFail($quotationId);
         $this->owned($request, $quotation);
 
-        if (! $quotation->isEditable()) {
+        if (! $quotation->canBeModified()) {
             return $this->itemNotEditableResponse();
         }
 
@@ -280,7 +278,7 @@ class QuotationController extends Controller
         $item = QuotationItem::findOrFail($ids['item_id']);
 
         $this->ownedItem($request, $quotation, $item);
-        if (! $quotation->isEditable()) {
+        if (! $quotation->canBeModified()) {
             return $this->itemNotEditableResponse();
         }
 
@@ -319,7 +317,7 @@ class QuotationController extends Controller
         $item = QuotationItem::findOrFail($ids['item_id']);
 
         $this->ownedItem($request, $quotation, $item);
-        if (! $quotation->isEditable()) {
+        if (! $quotation->canBeModified()) {
             return $this->itemNotEditableResponse();
         }
 
@@ -374,7 +372,8 @@ class QuotationController extends Controller
             'id' => $quotation->id, 'quotation_number' => $quotation->quotation_number,
             'quotation_date' => $quotation->quotation_date?->toDateString(), 'customer' => $quotation->customer,
             'status' => $quotation->displayStatus(), 'status_code' => $quotation->displayStatusClass(),
-            'total_amount' => (float) $quotation->total_amount, 'editable' => $quotation->isEditable(),
+            'total_amount' => (float) $quotation->total_amount, 'editable' => $quotation->canBeModified(),
+            'deletable' => $quotation->canBeModified(),
             'documents' => [
                 'quotation' => [
                     'status' => $quotation->displayStatus(),
@@ -444,7 +443,7 @@ class QuotationController extends Controller
 
     private function itemNotEditableResponse()
     {
-        return response()->json(['message' => 'Products on sent, approved, rejected, or invoiced quotations cannot be changed.'], 409);
+        return response()->json(['message' => 'Products cannot be changed after the quotation\'s invoice has been generated.'], 409);
     }
 
     private function validatedItem(Request $request, bool $quotationIdRequired = false): array

@@ -39,7 +39,7 @@ class InvoiceController extends Controller
                     'invoice_number' => $invoice->invoice_number,
                     'quotation_id' => $invoice->quotation_id,
                     'document_status' => $invoice->document_status,
-                    'quotation_editable' => $invoice->quotation->isEditable(),
+                    'quotation_editable' => $invoice->quotation->canBeModified(),
                 ],
             ]);
         });
