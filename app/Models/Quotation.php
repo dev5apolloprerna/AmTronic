@@ -117,6 +117,17 @@ class Quotation extends Model
             && ! $this->invoice()->exists();
     }
 
+    /**
+     * A quotation can be edited or deleted (whatever its status) until an
+     * invoice has been generated from it; after that it is locked.
+     */
+    public function canBeModified(): bool
+    {
+        return $this->relationLoaded('invoice')
+            ? $this->invoice === null
+            : ! $this->invoice()->exists();
+    }
+
     public function isSent(): bool
     {
         return $this->status === 'draft' && $this->document_status === 'quotation_sent';

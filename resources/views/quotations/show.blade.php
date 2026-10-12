@@ -13,7 +13,7 @@
                 <div class="quotation-actions-group quotation-actions-workflow">
                     <a href="{{ route('quotations.download', $quotation) }}" target="_blank" class="btn btn-secondary btn-sm">Quotation PDF</a>
                 @if($quotation->isEditable())
-                    <form method="POST" action="{{ route('quotations.mark-sent', $quotation) }}" style="display:inline" data-confirm="Mark this quotation as sent? It can no longer be edited.">
+                    <form method="POST" action="{{ route('quotations.mark-sent', $quotation) }}" style="display:inline" data-confirm="Mark this quotation as sent?">
                         @csrf
                         <button class="btn btn-success btn-sm">Send Quotation</button>
                     </form>
@@ -26,15 +26,16 @@
                         <button type="button" class="btn btn-success btn-sm" data-modal-open="generateInvoiceModal">Generate Invoice</button>
                     @endif
                 @endif
-                @if($quotation->isEditable())
+                @if($quotation->canBeModified())
                     <a href="{{ route('quotations.edit', $quotation) }}" class="btn btn-secondary btn-sm">Edit</a>
-
+                @endif
+                @if($quotation->isEditable())
                     <form method="POST" action="{{ route('quotations.reject', $quotation) }}" style="display:inline;" data-confirm="Reject this quotation?">
                         @csrf
                         <button type="submit" class="btn btn-warning btn-sm">Reject</button>
                     </form>
-                    @endif
-                @if(!$quotation->isEditable() && $quotation->invoice)
+                @endif
+                @if($quotation->invoice)
                     <a href="{{ route('invoices.show', $quotation->invoice) }}" class="btn btn-primary btn-sm">View Invoice</a>
                     <a href="{{ route('invoices.download', $quotation->invoice) }}" target="_blank" class="btn btn-secondary btn-sm">Download PDF</a>
                     @if($quotation->invoice->deliveryChallan)
@@ -52,13 +53,7 @@
                 @endif
                 </div>
                 <div class="quotation-actions-group quotation-actions-manage">
-                @if($quotation->status === 'approved')
-                    <form method="POST" action="{{ route('quotations.destroy', $quotation) }}" style="display:inline;" data-confirm="Delete this approved quotation? This will also delete the generated invoice and ledger entry.">
-                        @csrf
-                        @method('DELETE')
-                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                    </form>
-                @else
+                @if($quotation->canBeModified())
                     <form method="POST" action="{{ route('quotations.destroy', $quotation) }}" style="display:inline;" data-confirm="Delete this quotation?">
                         @csrf
                         @method('DELETE')

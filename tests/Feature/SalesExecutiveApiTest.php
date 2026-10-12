@@ -688,23 +688,39 @@ class SalesExecutiveApiTest extends TestCase
 
 
 
-    public function test_approved_quotation_cannot_be_edited_in_api_or_admin(): void
+    public function test_quotation_is_editable_until_invoice_is_generated_in_api_or_admin(): void
     {
         $user = $this->salesExecutive();
         $token = $this->token($user);
         $payload = $this->quotationPayload();
-        $id = $this->withToken($token)->postJson('/api/quotations', $payload)->json('data.id');
+        $id = $this->withToken($token)->postJson('/api/quotations/create', $payload)->json('data.id');
 
         $this->withToken($token)->postJson("/api/quotations/{$id}/mark-sent")->assertOk();
         $this->withToken($token)->postJson("/api/quotations/{$id}/approve")->assertOk()
-            ->assertJsonPath('data.editable', false);
+            ->assertJsonPath('data.editable', true)
+            ->assertJsonPath('data.deletable', true);
+        $this->withToken($token)->postJson("/api/quotations/{$id}/update", $payload)->assertOk();
+
+        $quotation = Quotation::findOrFail($id);
+        Invoice::create([
+            'invoice_number' => 'INV-LOCK-1',
+            'quotation_id' => $quotation->id,
+            'customer_id' => $quotation->customer_id,
+            'invoice_date' => '2026-09-22',
+            'sub_total' => $quotation->sub_total,
+            'total_amount' => $quotation->total_amount,
+        ]);
+
+        $this->withToken($token)->postJson("/api/quotations/{$id}/show")->assertOk()
+            ->assertJsonPath('data.editable', false)
+            ->assertJsonPath('data.deletable', false);
         $this->withToken($token)->postJson("/api/quotations/{$id}/update", $payload)->assertStatus(409);
+        $this->withToken($token)->postJson("/api/quotations/{$id}/delete")->assertStatus(409);
 
         $admin = User::factory()->create(['role' => 'super_admin', 'status' => 'active']);
-        $quotation = Quotation::findOrFail($id);
         $this->actingAs($admin)->get(route('quotations.edit', $quotation))
             ->assertRedirect(route('quotations.show', $quotation))
-            ->assertSessionHas('error', 'Sent, approved, or invoiced quotations cannot be edited.');
+            ->assertSessionHas('error', 'Quotation cannot be edited after its invoice has been generated.');
     }
 
     public function test_employee_can_update_quotation_details_without_sending_items(): void
@@ -799,12 +815,12 @@ class SalesExecutiveApiTest extends TestCase
             ->assertJsonPath('data.total_amount', 118);
     }
 
-    public function test_employee_cannot_change_another_quotation_item_or_items_on_sent_quotation(): void
+    public function test_employee_cannot_change_another_quotation_item_or_items_on_invoiced_quotation(): void
     {
         $owner = $this->salesExecutive();
         $ownerToken = $this->token($owner);
         $payload = $this->quotationPayload();
-        $created = $this->withToken($ownerToken)->postJson('/api/quotations', $payload);
+        $created = $this->withToken($ownerToken)->postJson('/api/quotations/create', $payload);
         $quotationId = $created->json('data.id');
         $itemId = $created->json('data.quotation.items.0.id');
 
@@ -815,7 +831,17 @@ class SalesExecutiveApiTest extends TestCase
         ])
             ->assertForbidden();
 
+        // Sending alone does not lock the products; generating the invoice does.
         $this->withToken($ownerToken)->postJson("/api/quotations/{$quotationId}/mark-sent")->assertOk();
+        $quotation = Quotation::findOrFail($quotationId);
+        Invoice::create([
+            'invoice_number' => 'INV-LOCK-2',
+            'quotation_id' => $quotation->id,
+            'customer_id' => $quotation->customer_id,
+            'invoice_date' => '2026-09-22',
+            'sub_total' => $quotation->sub_total,
+            'total_amount' => $quotation->total_amount,
+        ]);
         $this->withToken($ownerToken)->postJson('/api/quotations/items/delete', [
             'quotation_id' => $quotationId,
             'item_id' => $itemId,

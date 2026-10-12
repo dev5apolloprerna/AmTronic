@@ -184,8 +184,8 @@ class QuotationController extends Controller
     {
         $this->authorizeAccess($quotation);
 
-        if (! $quotation->isEditable()) {
-            return redirect()->route('quotations.show', $quotation)->with('error', 'Sent, approved, or invoiced quotations cannot be edited.');
+        if (! $quotation->canBeModified()) {
+            return redirect()->route('quotations.show', $quotation)->with('error', 'Quotation cannot be edited after its invoice has been generated.');
         }
 
         $quotation->load('items.product', 'items.material');
@@ -199,8 +199,8 @@ class QuotationController extends Controller
     {
         $this->authorizeAccess($quotation);
 
-        if (! $quotation->isEditable()) {
-            return redirect()->route('quotations.show', $quotation)->with('error', 'Sent, approved, or invoiced quotations cannot be edited.');
+        if (! $quotation->canBeModified()) {
+            return redirect()->route('quotations.show', $quotation)->with('error', 'Quotation cannot be edited after its invoice has been generated.');
         }
 
         $data = $this->validateData($request, $quotation);
@@ -235,8 +235,8 @@ class QuotationController extends Controller
     {
         $this->authorizeAccess($quotation);
 
-        if (! $quotation->isEditable()) {
-            return back()->with('error', 'Sent or approved quotations cannot be deleted.');
+        if (! $quotation->canBeModified()) {
+            return back()->with('error', 'Quotation cannot be deleted after its invoice has been generated.');
         }
 
         $quotation->items()->delete();

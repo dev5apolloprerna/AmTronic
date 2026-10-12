@@ -21,6 +21,12 @@ class AuthenticateApiToken
             return response()->json(['message' => 'Unauthenticated.'], 401);
         }
 
+        // Bearer tokens expire (see auth.api_token_ttl). Tokens issued before
+        // expiry was added have no date; they keep working until next login.
+        if ($token && $user->api_token_expires_at?->isPast()) {
+            return response()->json(['message' => 'Token expired. Please log in again.'], 401);
+        }
+
         Auth::setUser($user);
         $request->setUserResolver(fn () => $user);
 

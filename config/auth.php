@@ -112,4 +112,16 @@ return [
 
     'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mobile API Token Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | Minutes an API bearer token stays valid after login. After that the app
+    | must log in again. Default: 1440 minutes (1 day).
+    |
+    */
+
+    'api_token_ttl' => (int) env('API_TOKEN_TTL_MINUTES', 1440),
+
 ];

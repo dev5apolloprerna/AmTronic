@@ -20,6 +20,7 @@ class User extends Authenticatable
         'designation_id',
         'monthly_salary',
         'api_token',
+        'api_token_expires_at',
     ];
 
     protected $hidden = [
@@ -32,6 +33,7 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'api_token_expires_at' => 'datetime',
             'password' => 'hashed',
             'monthly_salary' => 'decimal:2',
         ];

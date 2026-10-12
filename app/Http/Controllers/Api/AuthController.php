@@ -34,19 +34,25 @@ class AuthController extends Controller
         }
 
         $plainToken = Str::random(80);
-        $user->forceFill(['api_token' => hash('sha256', $plainToken)])->save();
+        $expiresAt = now()->addMinutes(config('auth.api_token_ttl'));
+        $user->forceFill([
+            'api_token' => hash('sha256', $plainToken),
+            'api_token_expires_at' => $expiresAt,
+        ])->save();
 
         return response()->json([
             'message' => 'Login successful.',
             'token' => $plainToken,
             'token_type' => 'Bearer',
+            'expires_at' => $expiresAt->toIso8601String(),
+            'expires_in' => config('auth.api_token_ttl') * 60,
             'user' => $this->userData($user),
         ]);
     }
 
     public function logout(Request $request)
     {
-        $request->user()->forceFill(['api_token' => null])->save();
+        $request->user()->forceFill(['api_token' => null, 'api_token_expires_at' => null])->save();
 
         return response()->json(['message' => 'Logged out successfully.']);
     }
@@ -157,7 +163,7 @@ class AuthController extends Controller
         }
 
         DB::transaction(function () use ($user, $data) {
-            $user->update(['password' => $data['password'], 'api_token' => null]);
+            $user->update(['password' => $data['password'], 'api_token' => null, 'api_token_expires_at' => null]);
             DB::table('password_reset_otps')->where('email', $data['email'])->delete();
         });
 

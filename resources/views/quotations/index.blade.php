@@ -76,18 +76,22 @@
                                 <td class="text-right">&#8377;{{ number_format($q->total_amount, 2) }}</td>
                                 <td>
                                     <a href="{{ route('quotations.show', $q) }}" class="btn btn-secondary btn-sm">View</a>
-                                    @if($q->isEditable())
+                                    @if($q->canBeModified())
                                         <a href="{{ route('quotations.edit', $q) }}" class="btn btn-secondary btn-sm">Edit</a>
+                                    @endif
+                                    @if($q->isEditable())
                                         <form method="POST" action="{{ route('quotations.reject', $q) }}" style="display:inline;" data-confirm="Reject this quotation?">
                                             @csrf
                                             <button type="submit" class="btn btn-warning btn-sm">Reject</button>
                                         </form>
                                     @endif
-                                    <form method="POST" action="{{ route('quotations.destroy', $q) }}" style="display:inline;" data-confirm="Delete this quotation? @if($q->status === 'approved') This will also delete the generated invoice and ledger entry. @endif">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                                    </form>
+                                    @if($q->canBeModified())
+                                        <form method="POST" action="{{ route('quotations.destroy', $q) }}" style="display:inline;" data-confirm="Delete this quotation?">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                                        </form>
+                                    @endif
                                      <form method="POST" action="{{ route('quotations.duplicate', $q) }}" style="display:inline;" data-confirm="Create a new quotation copied from this one?">
                                         @csrf
                                         <button type="submit" class="btn btn-secondary btn-sm">Copy</button>
